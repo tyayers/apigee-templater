@@ -1,0 +1,15 @@
+<APIProxy revision="8" name="testproxy">
+    <DisplayName>testproxy</DisplayName>
+    <Description></Description>
+    <CreatedAt>1111</CreatedAt>
+    <LastModifiedAt>1111</LastModifiedAt>
+    <BasePaths>https://httpbin.org</BasePaths>
+    <Policies>
+    </Policies>
+    <ProxyEndpoints>
+        <ProxyEndpoint>default</ProxyEndpoint>
+    </ProxyEndpoints>
+    <TargetEndpoints>
+        <TargetEndpoint>default</TargetEndpoint>
+    </TargetEndpoints>
+</APIProxy>
