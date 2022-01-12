@@ -3,7 +3,7 @@ This is a simple tool for automating the templating of Apigee API proxies throug
 
 A **live version** can be tested [here](https://apigee-templater-h7pi7igbcq-ew.a.run.app/). Just fill in a name, a base path, an existing endpoint, and you can submit to get a proxy bundle generated and downloaded, which you can then import into Apigee (any version).
 
-![Frontend screenshot](img/screen1.png)
+![Frontend screenshot](img/screen2.png)
 
 Current features:
 * Proxy name is set
