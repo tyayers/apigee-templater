@@ -28,7 +28,7 @@ Simply clone the repo and check the **deploy.sh** script for any customizations 
 
 As an alternative you can also run **deploy_local.sh** to build to a local Docker environment.
 
-# Exending
+# Extending
 The project is simple to extend because the service is built with TypeScript and an easy plugin machanism for loading any additional templating, or adapting any of the existing plugins.  Just check out **service/src/index.ts** to see how the plugins are loaded, and **service/lib/plugins** to see the existing plugins, which are easy to duplicate and extend.
 
 # Feedback and feature requests
