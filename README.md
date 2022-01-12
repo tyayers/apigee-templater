@@ -1,9 +1,17 @@
 # Apigee Templater
-This is a simple tool for automating the templating of Apigee API proxies through a web frontned.  The tool consists of a nodejs backend and tailwindcss / react frontend for automatically generating Apigee API reverse proxies based on user inputs. 
+This is a simple tool for automating the templating of Apigee API proxies through a web frontend. The generated proxy is currently downloaded, but could easily be deployed to an Apigee org and environment as needed.
 
 A **live version** can be tested [here](https://apigee-templater-h7pi7igbcq-ew.a.run.app/).
 
 ![Frontend screenshot](img/screen1.png)
+
+Current features:
+* Proxy name is set
+* Target URL is set
+
+Coming soon features:
+* Set Auth based on config in frontend
+* Throttling config
 
 # Easy deploy
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run)

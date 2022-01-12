@@ -26,7 +26,11 @@ function App() {
     .then(blob => {
       console.log(blob)
       var blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl);
+      //window.open(blobUrl);
+      var anchor = document.createElement("a");
+      anchor.download = name + ".zip";
+      anchor.href = blobUrl;
+      anchor.click();      
     });
   }
 
