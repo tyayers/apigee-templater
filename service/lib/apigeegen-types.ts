@@ -2,6 +2,7 @@ interface apigeegen {
   name: string;
   proxyType: proxyTypes;
   basePath: string;
+  targetUrl: string;
   auth: authTypes;
 }
 

@@ -16,8 +16,9 @@ export class ManifestPlugin implements ApigeeGenPlugin {
         policies = processingVars["policies"] as string[];
 
       fs.writeFileSync(outputDir + inputConfig.name + ".xml",
-        this.template({proxyName: inputConfig.name, basePath: inputConfig.basePath, createdAt: "1111", policies: policies}));
+        this.template({proxyName: inputConfig.name, basePath: inputConfig.basePath, createdAt: "", policies: policies}));
   
+      resolve(result);
     });
   }
 }

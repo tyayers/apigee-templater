@@ -3,7 +3,7 @@
     <Description></Description>
     <CreatedAt>1111</CreatedAt>
     <LastModifiedAt>1111</LastModifiedAt>
-    <BasePaths>https://httpbin.org</BasePaths>
+    <BasePaths>/httpbin</BasePaths>
     <Policies>
     </Policies>
     <ProxyEndpoints>

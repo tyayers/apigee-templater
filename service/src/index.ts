@@ -8,9 +8,13 @@ import path from 'path';
 
 import { apigeegen } from '../lib/apigeegen-types';
 import { ApigeeGenPlugin } from "../lib/apigeegen-interface";
-import { ManifestPlugin } from "../lib/plugins/manifest-plugin"
+import { ManifestPlugin } from "../lib/plugins/manifest.plugin"
+import { TargetsPlugin } from "../lib/plugins/targets.plugin"
+import { EndpointsPlugin } from "../lib/plugins/endpoints.plugin"
 
 let plugins: ApigeeGenPlugin[] = [
+  new EndpointsPlugin(),
+  new TargetsPlugin(),
   new ManifestPlugin()
 ]
 
