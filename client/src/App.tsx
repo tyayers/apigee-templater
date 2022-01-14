@@ -4,6 +4,7 @@ import { useState } from 'react';
 import logo from './logo.svg';
 import beams from './assets/beams.jpg'
 import './App.css';
+import { env } from 'process';
 
 const yaml = require('js-yaml')
 
@@ -14,8 +15,9 @@ function App() {
   const [target, setTarget] = useState("")
   const [spec, setSpec] = useState("")
   const [description, setDescription] = useState("")
+  const [environment, setEnvironment] = useState("")
 
-  function submit() {
+  function submit(deploy: boolean) {
     if (!name) {
       alert("Please enter at least a name for the proxy.");
       return;
@@ -27,27 +29,32 @@ function App() {
         setTarget(specObj.servers[0].url.replace("http://", "").replace("https://", ""));
     }
 
+    var command = {
+      name: name,
+      basePath: "/" + basePath,
+      targetUrl: "https://" + target,
+      deploy: deploy,
+      deployEnvironment: environment
+    }
+
     fetch("/apigeegen",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        name: name,
-        basePath: "/" + basePath,
-        targetUrl: "https://" + target
-      })
+      body: JSON.stringify(command)
     })
     .then(response => response.blob())
     .then(blob => {
-      console.log(blob)
-      var blobUrl = URL.createObjectURL(blob);
-      //window.open(blobUrl);
-      var anchor = document.createElement("a");
-      anchor.download = name + ".zip";
-      anchor.href = blobUrl;
-      anchor.click();      
+      if (!deploy) {
+        var blobUrl = URL.createObjectURL(blob);
+        //window.open(blobUrl);
+        var anchor = document.createElement("a");
+        anchor.download = name + ".zip";
+        anchor.href = blobUrl;
+        anchor.click();    
+      }
     });
   }
 
@@ -56,8 +63,27 @@ function App() {
 
     reader.addEventListener("load", () => {
       // this will then display a text file
-      if (reader.result != null)
-        setSpec(reader.result.toString());
+      if (reader.result != null) {
+        let newSpec = reader.result.toString();
+        setSpec(newSpec);
+        const specObj = yaml.load(newSpec);
+
+        if (!target) {
+          if (specObj && specObj.servers && specObj.servers.length > 0)
+            setTarget(specObj.servers[0].url.replace("http://", "").replace("https://", ""));
+        }
+
+        if (!name) {
+          if (specObj && specObj.info && specObj.info.title)
+            setName(specObj.info.title)
+        }
+
+        if (!basePath) {
+          if (specObj && specObj.tags && specObj.tags.length > 0)
+            setBasePath(specObj.tags[0].name);
+        }
+      }
+
     }, false);
   
     reader.readAsText(event.target.files[0]);
@@ -209,6 +235,28 @@ function App() {
                           </p>
                         </div>
 
+                        <div className="grid grid-cols-3 gap-6">
+                          <div className="col-span-3">
+                            <label htmlFor="api-name" className="block text-sm font-medium text-gray-700">
+                              Environment
+                            </label>
+                            <div className="mt-1 flex rounded-md shadow-sm">
+                              <input
+                                type="text"
+                                name="api-env"
+                                id="api-env"
+                                className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block rounded-md sm:text-sm border-gray-300 border"
+                                placeholder="dev"
+                                value={environment}
+                                onChange={(e) => setEnvironment(e.target.value)}
+                              />
+                            </div>
+                            <p className="mt-2 text-sm text-gray-500">
+                            The environment in case the API should be deployed.
+                          </p>
+                          </div>
+                        </div>
+
                         <div className="col-span-6 sm:col-span-3">
                           <fieldset>
                             <legend className="block text-sm font-medium text-gray-700">Authorization methods accepted</legend>
@@ -286,11 +334,18 @@ function App() {
                       <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
                         <button
                           type="submit"
-                          onClick={() => submit()}
+                          onClick={() => submit(false)}
+                          className="inline-flex justify-center mr-2 py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          Download
+                        </button>
+                        <button
+                          type="submit"
+                          onClick={() => submit(true)}
                           className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         >
-                          Save
-                        </button>
+                          Deploy
+                        </button>                        
                       </div>
                     </div>
                   </div>

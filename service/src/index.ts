@@ -6,6 +6,8 @@ import Handlebars from 'handlebars';
 import archiver from 'archiver';
 import path from 'path';
 
+import { ApigeeService, ApiManagementInterface, ProxyRevision, ProxyDeployment} from 'apigee-x-module'
+
 import { apigeegen } from '../lib/apigeegen-types';
 import { ApigeeGenPlugin } from "../lib/apigeegen-interface";
 import { ManifestPlugin } from "../lib/plugins/manifest.plugin"
@@ -17,6 +19,8 @@ let plugins: ApigeeGenPlugin[] = [
   new TargetsPlugin(),
   new ManifestPlugin()
 ]
+
+const apigeeService: ApiManagementInterface = new ApigeeService();
 
 const app = express();
 
@@ -43,9 +47,39 @@ app.post('/apigeegen', (req, res) => {
     res.status(500).send({error: err.message});
   });
 
-  res.attachment("proxies/" + genInput.name + '.zip');
-  archive.pipe(res);
+  res.attachment(genInput.name + '.zip').type('zip');
+  //archive.pipe(res);
   archive.directory("proxies/" + genInput.name, false);
+
+  fs.unlinkSync("proxies/" + genInput.name + ".zip");
+  var output = fs.createWriteStream("proxies/" + genInput.name + ".zip");
+
+  archive.on('end', () => {
+    if (genInput.deploy && genInput.deployEnvironment) {
+      apigeeService.updateProxy(genInput.name, "proxies/" + genInput.name + ".zip").then((updateResult: ProxyRevision) => {
+        if (updateResult && updateResult.revision) {
+          apigeeService.deployProxyRevision(genInput.deployEnvironment, genInput.name, updateResult.revision).then((deploymentResult) => {
+            console.log("deploy complete!");
+          }).catch((error) => {
+            console.log(error);
+          });
+        }
+      }).catch((error) => {
+        console.log(error);
+      });
+    }
+
+    // Create a readable stream that we can pipe to the response object
+    let readStream = fs.createReadStream("proxies/" + genInput.name + ".zip");
+    // When everything has been read from the stream, end the response
+    readStream.on('close', () => {
+      res.end();
+    });
+    // Pipe the contents of the readStream directly to the response
+    readStream.pipe(res)
+  });
+
+  archive.pipe(output);
   archive.finalize();
 });
 

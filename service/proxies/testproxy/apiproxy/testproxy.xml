@@ -1,8 +1,8 @@
 <APIProxy revision="8" name="testproxy">
     <DisplayName>testproxy</DisplayName>
     <Description></Description>
-    <CreatedAt>1111</CreatedAt>
-    <LastModifiedAt>1111</LastModifiedAt>
+    <CreatedAt></CreatedAt>
+    <LastModifiedAt></LastModifiedAt>
     <BasePaths>/httpbin</BasePaths>
     <Policies>
     </Policies>

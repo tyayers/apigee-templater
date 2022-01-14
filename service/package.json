@@ -11,14 +11,16 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "ts-node": "^10.4.0",
     "tslint": "^6.1.3",
-    "typescript": "^4.5.3"
+    "typescript": "^4.5.4"
   },
   "dependencies": {
     "@types/express": "^4.17.13",
+    "apigee-x-module": "^0.5.14",
     "archiver": "^5.3.0",
     "cors": "^2.8.5",
-    "express": "^4.17.1",
+    "express": "^4.17.2",
     "handlebars": "^4.7.7",
     "morgan": "^1.10.0"
   }

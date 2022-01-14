@@ -3,7 +3,9 @@ interface apigeegen {
   proxyType: proxyTypes;
   basePath: string;
   targetUrl: string;
-  auth: authTypes;
+  auth: authTypes[];
+  deploy: boolean;
+  deployEnvironment: string;
 }
 
 enum proxyTypes {

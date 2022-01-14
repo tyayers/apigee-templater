@@ -1,0 +1,21 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Node TS Service",
+      "type": "node",
+      "request": "launch",
+      "args": ["${workspaceRoot}/service/src/index.ts"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "sourceMaps": true,
+      "cwd": "${workspaceRoot}/service",
+      "protocol": "inspector",
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "/home/tylerayers/key.json"
+      }
+    }
+  ]
+}
