@@ -6,6 +6,9 @@ import beams from './assets/beams.jpg'
 import './App.css';
 import { env } from 'process';
 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 const yaml = require('js-yaml')
 
 function App() {
@@ -17,27 +20,22 @@ function App() {
   const [description, setDescription] = useState("")
   const [environment, setEnvironment] = useState("")
 
-  function submit(deploy: boolean) {
+  function downloadProxyFile() {
     if (!name) {
-      alert("Please enter at least a name for the proxy.");
+      toast.error("Please enter at least a name for the API.");
       return;
-    }
-
-    if (!target && spec) {
-      const specObj = yaml.load(spec);
-      if (specObj && specObj.servers && specObj.servers.length > 0)
-        setTarget(specObj.servers[0].url.replace("http://", "").replace("https://", ""));
     }
 
     var command = {
       name: name,
       basePath: "/" + basePath,
-      targetUrl: "https://" + target,
-      deploy: deploy,
-      deployEnvironment: environment
+      targetUrl: "https://" + target
     }
 
-    fetch("/apigeegen",
+    var serviceUrl = "/apigeegen/file"
+    if (process.env.REACT_APP_SVC_BASE_URL) serviceUrl = process.env.REACT_APP_SVC_BASE_URL + serviceUrl;
+
+    fetch(serviceUrl,
     {
       method: "POST",
       headers: {
@@ -47,13 +45,49 @@ function App() {
     })
     .then(response => response.blob())
     .then(blob => {
-      if (!deploy) {
-        var blobUrl = URL.createObjectURL(blob);
-        //window.open(blobUrl);
-        var anchor = document.createElement("a");
-        anchor.download = name + ".zip";
-        anchor.href = blobUrl;
-        anchor.click();    
+      toast.success("API file download successful!")
+      var blobUrl = URL.createObjectURL(blob);
+      var anchor = document.createElement("a");
+      anchor.download = name + ".zip";
+      anchor.href = blobUrl;
+      anchor.click();    
+    });
+  }
+
+  function deployProxy() {
+    if (!name) {
+      toast.error("Please enter at least a name for the proxy.");
+      return;
+    }
+
+    if (!environment) {
+      toast.error("Please enter an Apigee environment to deploy to.");
+      return;
+    }
+
+    var command = {
+      name: name,
+      basePath: "/" + basePath,
+      targetUrl: "https://" + target
+    }
+
+    var serviceUrl = "/apigeegen/deployment/" + environment;
+    if (process.env.REACT_APP_SVC_BASE_URL) serviceUrl = process.env.REACT_APP_SVC_BASE_URL + serviceUrl;
+
+    fetch(serviceUrl,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(command)
+    })
+    .then(response => {
+      if (response.status == 200) {
+        toast.success("API deployment successful!");
+      }
+      else {
+        toast.error("API deployment failed, possibly the environment doesn't exist?")
       }
     });
   }
@@ -75,7 +109,7 @@ function App() {
 
         if (!name) {
           if (specObj && specObj.info && specObj.info.title)
-            setName(specObj.info.title)
+            setName(specObj.info.title.replace(" ", "-"))
         }
 
         if (!basePath) {
@@ -87,7 +121,6 @@ function App() {
     }, false);
   
     reader.readAsText(event.target.files[0]);
-    //setSpec(event.target.files[0]);
   }
 
   return (
@@ -124,11 +157,14 @@ function App() {
                                 name="api-name"
                                 id="api-name"
                                 className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block rounded-md sm:text-sm border-gray-300 border"
-                                placeholder="Super API"
+                                placeholder="Super-API"
                                 value={name}
-                                onChange={(e) => setName(e.target.value)}
+                                onChange={(e) => setName(e.target.value.replace(" ", "-"))}
                               />
                             </div>
+                            <p className="mt-2 text-sm text-gray-500">
+                            Spaces will be replaced with dashes.
+                            </p>                            
                           </div>
                         </div>
 
@@ -334,14 +370,14 @@ function App() {
                       <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
                         <button
                           type="submit"
-                          onClick={() => submit(false)}
+                          onClick={() => downloadProxyFile()}
                           className="inline-flex justify-center mr-2 py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         >
                           Download
                         </button>
                         <button
                           type="submit"
-                          onClick={() => submit(true)}
+                          onClick={() => deployProxy()}
                           className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         >
                           Deploy
@@ -355,6 +391,7 @@ function App() {
           </div>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }
