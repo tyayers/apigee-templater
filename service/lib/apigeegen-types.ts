@@ -13,7 +13,8 @@ enum proxyTypes {
 
 enum authTypes {
   apikey = "apikey",
-  jwt = "jwt"
+  jwt = "jwt",
+  sharedflow = "sharedflow"
 }
 
 export {

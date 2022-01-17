@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <ProxyEndpoint name="default">
     <PreFlow name="PreFlow">
-        <Request/>
+        <Request>
+          {{#each pf_rq_policies}}
+            <Step>
+              <Name>{{this}}</Name>
+            </Step>
+          {{/each}}
+        </Request>
         <Response/>
     </PreFlow>
     <Flows/>

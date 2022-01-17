@@ -2,24 +2,12 @@ import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan'
-import Handlebars from 'handlebars';
-import archiver from 'archiver';
-import path from 'path';
 
 import { ApigeeService, ApiManagementInterface, ProxyRevision, ProxyDeployment} from 'apigee-x-module'
 
 import { apigeegen } from '../lib/apigeegen-types';
 import { ApigeeGenService, ApigeeGenPlugin } from "../lib/apigeegen-interface";
 import { ApigeeGenerator } from '../lib/apigeegen-service';
-import { ManifestPlugin } from "../lib/plugins/manifest.plugin"
-import { TargetsPlugin } from "../lib/plugins/targets.plugin"
-import { EndpointsPlugin } from "../lib/plugins/endpoints.plugin"
-
-let plugins: ApigeeGenPlugin[] = [
-  new EndpointsPlugin(),
-  new TargetsPlugin(),
-  new ManifestPlugin()
-]
 
 const apigeeGenerator: ApigeeGenService = new ApigeeGenerator();
 const apigeeService: ApiManagementInterface = new ApigeeService();

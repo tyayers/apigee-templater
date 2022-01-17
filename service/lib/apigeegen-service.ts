@@ -2,12 +2,17 @@ import { ApigeeGenService, ApigeeGenPlugin } from "../lib/apigeegen-interface";
 import { ManifestPlugin } from "../lib/plugins/manifest.plugin"
 import { TargetsPlugin } from "../lib/plugins/targets.plugin"
 import { EndpointsPlugin } from "../lib/plugins/endpoints.plugin"
+import { AuthApiKeyPlugin } from "./plugins/auth-apikey.plugin";
+import { AuthSfPlugin } from "./plugins/auth-sf.plugin";
+
 import archiver from 'archiver';
 import fs from 'fs';
 
 let plugins: ApigeeGenPlugin[] = [
-  new EndpointsPlugin(),
+  new AuthApiKeyPlugin(),
+  new AuthSfPlugin(),
   new TargetsPlugin(),
+  new EndpointsPlugin(),
   new ManifestPlugin()
 ]
 
@@ -26,11 +31,8 @@ export class ApigeeGenerator implements ApigeeGenService {
       var archive = archiver('zip');
       archive.on('error', function(err) {
         reject(err);
-        //res.status(500).send({error: err.message});
       });
     
-      //res.attachment(genInput.name + '.zip').type('zip');
-      //archive.pipe(res);
       archive.directory("proxies/" + genInput.name, false);
     
       var output = fs.createWriteStream("proxies/" + genInput.name + ".zip");

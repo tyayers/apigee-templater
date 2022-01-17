@@ -8,6 +8,7 @@ import { env } from 'process';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { generateKeySync } from 'crypto';
 
 const yaml = require('js-yaml')
 
@@ -17,6 +18,8 @@ function App() {
   const [basePath, setBasePath] = useState("")
   const [target, setTarget] = useState("")
   const [spec, setSpec] = useState("")
+  const [authApiKey, setAuthApiKey] = useState(false)
+  const [authSharedFlow, setAuthSharedFlow] = useState(false)
   const [description, setDescription] = useState("")
   const [environment, setEnvironment] = useState("")
 
@@ -26,14 +29,8 @@ function App() {
       return;
     }
 
-    var command = {
-      name: name,
-      basePath: "/" + basePath,
-      targetUrl: "https://" + target
-    }
-
-    var serviceUrl = "/apigeegen/file"
-    if (process.env.REACT_APP_SVC_BASE_URL) serviceUrl = process.env.REACT_APP_SVC_BASE_URL + serviceUrl;
+    var command = generateCommand();
+    var serviceUrl = getServiceUrl() + "/file";
 
     fetch(serviceUrl,
     {
@@ -65,14 +62,8 @@ function App() {
       return;
     }
 
-    var command = {
-      name: name,
-      basePath: "/" + basePath,
-      targetUrl: "https://" + target
-    }
-
-    var serviceUrl = "/apigeegen/deployment/" + environment;
-    if (process.env.REACT_APP_SVC_BASE_URL) serviceUrl = process.env.REACT_APP_SVC_BASE_URL + serviceUrl;
+    var command = generateCommand();
+    var serviceUrl = getServiceUrl() + "/deployment/" + environment;
 
     fetch(serviceUrl,
     {
@@ -90,6 +81,27 @@ function App() {
         toast.error("API deployment failed, possibly the environment doesn't exist?")
       }
     });
+  }
+
+  function generateCommand() {
+    var command = {
+      name: name,
+      basePath: "/" + basePath,
+      targetUrl: "https://" + target,
+      auth: [""]
+    }
+
+    if (authApiKey) command.auth.push("apikey");
+    if (authSharedFlow) command.auth.push("sharedflow");
+
+    return command;
+  }
+
+  function getServiceUrl() {
+    var serviceUrl = "/apigeegen";
+    if (process.env.REACT_APP_SVC_BASE_URL) serviceUrl = process.env.REACT_APP_SVC_BASE_URL + serviceUrl;
+
+    return serviceUrl;
   }
 
   function onFileChange(event: any) {
@@ -304,6 +316,8 @@ function App() {
                                     name="apikey"
                                     type="checkbox"
                                     className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                    defaultChecked={authApiKey}
+                                    onChange={(e) => setAuthApiKey(e.target.checked)}
                                   />
                                 </div>
                                 <div className="ml-3 text-sm">
@@ -316,17 +330,19 @@ function App() {
                               <div className="flex items-start">
                                 <div className="flex items-center h-5">
                                   <input
-                                    id="idtoken"
-                                    name="idtoken"
+                                    id="authsharedflow"
+                                    name="authsharedflow"
                                     type="checkbox"
                                     className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                    defaultChecked={authSharedFlow}
+                                    onChange={(e) => setAuthSharedFlow(e.target.checked)}
                                   />
                                 </div>
                                 <div className="ml-3 text-sm">
-                                  <label htmlFor="idtoken" className="font-medium text-gray-700">
-                                    OAuth token
+                                  <label htmlFor="authsharedflow" className="font-medium text-gray-700">
+                                    OAuth shared flow
                                   </label>
-                                  <p className="text-gray-500">Access is granted with an OAuth access token.</p>
+                                  <p className="text-gray-500">Access is granted with an OAuth shared flow.</p>
                                 </div>
                               </div>
                             </div>

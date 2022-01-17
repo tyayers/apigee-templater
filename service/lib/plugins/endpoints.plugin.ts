@@ -13,7 +13,7 @@ export class EndpointsPlugin implements ApigeeGenPlugin {
       fs.mkdirSync(outputDir + "/proxies");
 
       fs.writeFileSync(outputDir + "/proxies/default" + ".xml",
-        this.template({basePath: inputConfig.basePath}));
+        this.template({basePath: inputConfig.basePath, pf_rq_policies: processingVars["pf_rq_policies"]}));
 
       resolve(true);
     });
