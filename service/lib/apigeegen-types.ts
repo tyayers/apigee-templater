@@ -3,7 +3,12 @@ interface apigeegen {
   proxyType: proxyTypes;
   basePath: string;
   targetUrl: string;
-  auth: authTypes[];
+  auth: authConfig[];
+}
+
+interface authConfig {
+  type: authTypes;
+  parameters: {[key: string]: string};
 }
 
 enum proxyTypes {

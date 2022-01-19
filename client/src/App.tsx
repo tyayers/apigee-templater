@@ -20,6 +20,10 @@ function App() {
   const [spec, setSpec] = useState("")
   const [authApiKey, setAuthApiKey] = useState(false)
   const [authSharedFlow, setAuthSharedFlow] = useState(false)
+  const [authSharedFlowAudience, setAuthSharedFlowAudience] = useState("")
+  const [authSharedFlowRoles, setAuthSharedFlowRoles] = useState("")
+  const [authSharedFlowIssuer1, setAuthSharedFlowIssuer1] = useState("")
+  const [authSharedFlowIssuer2, setAuthSharedFlowIssuer2] = useState("")
   const [description, setDescription] = useState("")
   const [environment, setEnvironment] = useState("")
 
@@ -33,22 +37,22 @@ function App() {
     var serviceUrl = getServiceUrl() + "/file";
 
     fetch(serviceUrl,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(command)
-    })
-    .then(response => response.blob())
-    .then(blob => {
-      toast.success("API file download successful!")
-      var blobUrl = URL.createObjectURL(blob);
-      var anchor = document.createElement("a");
-      anchor.download = name + ".zip";
-      anchor.href = blobUrl;
-      anchor.click();    
-    });
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(command)
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        toast.success("API file download successful!")
+        var blobUrl = URL.createObjectURL(blob);
+        var anchor = document.createElement("a");
+        anchor.download = name + ".zip";
+        anchor.href = blobUrl;
+        anchor.click();
+      });
   }
 
   function deployProxy() {
@@ -66,21 +70,21 @@ function App() {
     var serviceUrl = getServiceUrl() + "/deployment/" + environment;
 
     fetch(serviceUrl,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(command)
-    })
-    .then(response => {
-      if (response.status == 200) {
-        toast.success("API deployment successful!");
-      }
-      else {
-        toast.error("API deployment failed, possibly the environment doesn't exist?")
-      }
-    });
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(command)
+      })
+      .then(response => {
+        if (response.status == 200) {
+          toast.success("API deployment successful!");
+        }
+        else {
+          toast.error("API deployment failed, possibly the environment doesn't exist?")
+        }
+      });
   }
 
   function generateCommand() {
@@ -88,11 +92,23 @@ function App() {
       name: name,
       basePath: "/" + basePath,
       targetUrl: "https://" + target,
-      auth: [""]
+      auth: [{}]
     }
 
-    if (authApiKey) command.auth.push("apikey");
-    if (authSharedFlow) command.auth.push("sharedflow");
+    if (authApiKey) command.auth.push({
+      type: "apikey",
+      parameters: {}
+    });
+    if (authSharedFlow) command.auth.push({
+      type: "sharedflow",
+      parameters: {
+        audience: authSharedFlowAudience,
+        roles: authSharedFlowRoles,
+        issuerVer1: authSharedFlowIssuer1,
+        issuerVer2: authSharedFlowIssuer2
+
+      }
+    });
 
     return command;
   }
@@ -125,13 +141,13 @@ function App() {
         }
 
         if (!basePath) {
-          if (specObj && specObj.tags && specObj.tags.length > 0)
-            setBasePath(specObj.tags[0].name);
+          if (specObj && specObj.paths && Object.keys(specObj.paths).length > 0)
+            setBasePath(Object.keys(specObj.paths)[0].replace("/", ""));
         }
       }
 
     }, false);
-  
+
     reader.readAsText(event.target.files[0]);
   }
 
@@ -175,8 +191,8 @@ function App() {
                               />
                             </div>
                             <p className="mt-2 text-sm text-gray-500">
-                            Spaces will be replaced with dashes.
-                            </p>                            
+                              Spaces will be replaced with dashes.
+                            </p>
                           </div>
                         </div>
 
@@ -200,10 +216,10 @@ function App() {
                               />
                             </div>
                             <p className="mt-2 text-sm text-gray-500">
-                            The base path that your API will be offered on.
+                              The base path that your API will be offered on.
                             </p>
                           </div>
-                        </div>                     
+                        </div>
 
                         <div className="grid grid-cols-3 gap-6">
                           <div className="col-span-3">
@@ -225,7 +241,7 @@ function App() {
                               />
                             </div>
                             <p className="mt-2 text-sm text-gray-500">
-                            Target Cloud Function, Cloud Run, or GKE Ingress endpoint (overrides OpenAPI spec)
+                              Target Cloud Function, Cloud Run, or GKE Ingress endpoint (overrides OpenAPI spec)
                             </p>
                           </div>
                         </div>
@@ -258,7 +274,7 @@ function App() {
                                 </label>
                                 <p className="pl-1">or drag and drop</p>
                               </div>
-                              <p className="text-xs text-gray-500">YAML, JSON up to 5MB</p>
+                              <p className="text-xs text-gray-500">YAML v3 up to 5MB</p>
                             </div>
                           </div>
                         </div>
@@ -300,8 +316,8 @@ function App() {
                               />
                             </div>
                             <p className="mt-2 text-sm text-gray-500">
-                            The environment in case the API should be deployed.
-                          </p>
+                              The environment in case the API should be deployed.
+                            </p>
                           </div>
                         </div>
 
@@ -345,11 +361,100 @@ function App() {
                                   <p className="text-gray-500">Access is granted with an OAuth shared flow.</p>
                                 </div>
                               </div>
+
+                              {authSharedFlow &&
+                                <div className="ml-10">
+                                  <div className="grid grid-cols-3 gap-6">
+                                    <div className="col-span-3">
+                                      <label htmlFor="api-name" className="block text-sm font-medium text-gray-700">
+                                        Audience
+                                      </label>
+                                      <div className="mt-1 flex rounded-md shadow-sm">
+                                        <input
+                                          type="text"
+                                          name="api-aud"
+                                          id="api-aud"
+                                          className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block rounded-md sm:text-sm border-gray-300 border"
+                                          placeholder=""
+                                          value={authSharedFlowAudience}
+                                          onChange={(e) => setAuthSharedFlowAudience(e.target.value)}
+                                        />
+                                      </div>
+                                      <p className="mt-2 text-sm text-gray-500">
+                                        The audience to validate for in the JWT token.
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-5 grid grid-cols-3 gap-6">
+                                    <div className="col-span-3">
+                                      <label htmlFor="api-name" className="block text-sm font-medium text-gray-700">
+                                        Roles
+                                      </label>
+                                      <div className="mt-1 flex rounded-md shadow-sm">
+                                        <input
+                                          type="text"
+                                          name="api-roles"
+                                          id="api-roles"
+                                          className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block rounded-md sm:text-sm border-gray-300 border"
+                                          placeholder=""
+                                          value={authSharedFlowRoles}
+                                          onChange={(e) => setAuthSharedFlowRoles(e.target.value)}
+                                        />
+                                      </div>
+                                      <p className="mt-2 text-sm text-gray-500">
+                                        The roles to check in the JWT token.
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-5 grid grid-cols-3 gap-6">
+                                    <div className="col-span-3">
+                                      <label htmlFor="api-name" className="block text-sm font-medium text-gray-700">
+                                        Issuer v1
+                                      </label>
+                                      <div className="mt-1 flex rounded-md shadow-sm">
+                                        <input
+                                          type="text"
+                                          name="api-issuer1"
+                                          id="api-issuer1"
+                                          className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block rounded-md sm:text-sm border-gray-300 border"
+                                          placeholder=""
+                                          value={authSharedFlowIssuer1}
+                                          onChange={(e) => setAuthSharedFlowIssuer1(e.target.value)}
+                                        />
+                                      </div>
+                                      <p className="mt-2 text-sm text-gray-500">
+                                        The Issuer v1 to check in the JWT token.
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-5 grid grid-cols-3 gap-6">
+                                    <div className="col-span-3">
+                                      <label htmlFor="api-name" className="block text-sm font-medium text-gray-700">
+                                        Issuer v2
+                                      </label>
+                                      <div className="mt-1 flex rounded-md shadow-sm">
+                                        <input
+                                          type="text"
+                                          name="api-issuer2"
+                                          id="api-issuer2"
+                                          className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block rounded-md sm:text-sm border-gray-300 border"
+                                          placeholder=""
+                                          value={authSharedFlowIssuer2}
+                                          onChange={(e) => setAuthSharedFlowIssuer2(e.target.value)}
+                                        />
+                                      </div>
+                                      <p className="mt-2 text-sm text-gray-500">
+                                        The Issuer v2 to check in the JWT token.
+                                      </p>
+                                    </div>
+                                  </div>                                  
+                                </div>
+                              }
                             </div>
                           </fieldset>
                         </div>
 
-                        <div className="col-span-6 sm:col-span-3">
+                        {/* <div className="col-span-6 sm:col-span-3">
                           <label htmlFor="auth-type" className="block text-sm font-medium text-gray-700">
                             Visability
                           </label>
@@ -364,8 +469,8 @@ function App() {
                             <option>Public</option>
                             <option>Test</option>
                           </select>
-                        </div>
-
+                        </div> */}
+                        {/* 
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Photo</label>
                           <div className="mt-1 flex items-center">
@@ -381,7 +486,7 @@ function App() {
                               Change
                             </button>
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                       <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
                         <button
@@ -397,7 +502,7 @@ function App() {
                           className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         >
                           Deploy
-                        </button>                        
+                        </button>
                       </div>
                     </div>
                   </div>

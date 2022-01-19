@@ -10,7 +10,8 @@ export class TargetsPlugin implements ApigeeGenPlugin {
   applyTemplate(inputConfig: apigeegen, processingVars: Map<string, any>, outputDir: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
 
-      fs.mkdirSync(outputDir + "/targets");
+      if (!fs.existsSync(outputDir + "targets"))
+        fs.mkdirSync(outputDir + "targets");
 
       fs.writeFileSync(outputDir + "/targets/default" + ".xml",
         this.template({targetUrl: inputConfig.targetUrl}));

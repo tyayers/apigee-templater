@@ -55,9 +55,15 @@ app.post('/apigeegen/deployment/:environment', (req, res) => {
       }
     }).catch((error) => {
       fs.unlinkSync("proxies/" + genInput.name + ".zip");
-      res.status(500).send({
-        message: `Error deploying proxy ${genInput.name}.`
-      });
+
+      if (error && error.response && error.response.status && error.response.status == 400)
+        res.status(400).send({
+          message: `Error deploying ${genInput.name}, bundle has errors.`
+        });
+      else
+        res.status(500).send({
+          message: `Error deploying ${genInput.name}, general error.`
+        });
     });
   }).catch((error) => {
     fs.unlinkSync("proxies/" + genInput.name + ".zip");

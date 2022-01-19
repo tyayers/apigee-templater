@@ -30,7 +30,7 @@ Simply clone the repo and check the **deploy.sh** script for any customizations 
 As an alternative you can also run **deploy_local.sh** to build to a local Docker environment.
 
 # Headless
-You can also use the service without the frontend using REST calls, for example this call deploys a proxy:
+You can also use the service without the frontend using REST calls, for example this call deploys a proxy to the **test1** Apigee environment:
 
 ```bash
 curl --location --request POST 'http://localhost:8080/apigeegen/deployment/test1' \
@@ -55,7 +55,6 @@ curl --location --request POST 'http://localhost:8080/apigeegen/file' \
     "auth": ["apikey"]
 }'
 ```
-
 
 # Extending
 The project is simple to extend because the service is built with TypeScript and an easy plugin machanism for loading any additional templating, or adapting any of the existing plugins.  Just check out **service/lib/apigeegen-service.ts** to see how the plugins are loaded, and **service/lib/plugins** to see the existing plugins, which are easy to duplicate and extend.

@@ -11,8 +11,12 @@ export class AuthApiKeyPlugin implements ApigeeGenPlugin {
   applyTemplate(inputConfig: apigeegen, processingVars: Map<string, any>, outputDir: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
 
-      if (inputConfig.auth && inputConfig.auth.includes(authTypes.apikey)) {
-        fs.mkdirSync(outputDir + "/policies");
+      if (inputConfig.auth && inputConfig.auth.filter(e => e.type === authTypes.apikey).length > 0) {
+
+        if (!fs.existsSync(outputDir + "policies"))
+          fs.mkdirSync(outputDir + "policies");
+        
+        var authConfig = inputConfig.auth.filter(e => e.type === authTypes.apikey)[0];
 
         fs.writeFileSync(outputDir + "/policies/verify-api-key" + ".xml",
           this.template({}));

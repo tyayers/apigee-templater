@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<FlowCallout continueOnError="false" enabled="true" name="validate-token">
-    <DisplayName>Validate-Token</DisplayName>
+<FlowCallout continueOnError="false" enabled="true" name="VerifyJWT">
+    <DisplayName>VerifyJWT</DisplayName>
     <FaultRules/>
     <Properties/>
-    <SharedFlowBundle>validate-token</SharedFlowBundle>
+    <Parameters>
+        <Parameter name="audience">{{audience}}</Parameter>
+        <Parameter name="roles">{{roles}}</Parameter>
+        <Parameter name="issuerVer1">{{issuerVer1}}</Parameter>
+        <Parameter name="issuerVer2">{{issuerVer2}}</Parameter>
+    </Parameters>
+    <SharedFlowBundle>Shared-Flow_GCP_API</SharedFlowBundle>
 </FlowCallout>
