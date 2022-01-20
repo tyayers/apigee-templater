@@ -1,13 +1,12 @@
 import fs from 'fs';
 import Handlebars from 'handlebars';
-import { ApigeeGenPlugin } from "../apigeegen-interface";
-import { apigeegen } from "../apigeegen-types";
+import { ApigeeGenPlugin, ApigeeGenInput } from "../interfaces";
 
 export class ManifestPlugin implements ApigeeGenPlugin {
 
   template: any = Handlebars.compile(fs.readFileSync("templates/manifest.xml", "utf8"));
 
-  applyTemplate(inputConfig: apigeegen, processingVars: Map<string, any>, outputDir: string): Promise<boolean> {
+  applyTemplate(inputConfig: ApigeeGenInput, processingVars: Map<string, any>, outputDir: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       var result = true;
       var policies: string[] = [];

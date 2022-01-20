@@ -18,6 +18,8 @@ function App() {
   const [basePath, setBasePath] = useState("")
   const [target, setTarget] = useState("")
   const [spec, setSpec] = useState("")
+  const [spikeArrest, setSpikeArrest] = useState(false)
+  const [quota, setQuota] = useState(false)
   const [authApiKey, setAuthApiKey] = useState(false)
   const [authSharedFlow, setAuthSharedFlow] = useState(false)
   const [authSharedFlowAudience, setAuthSharedFlowAudience] = useState("")
@@ -88,19 +90,21 @@ function App() {
   }
 
   function generateCommand() {
-    var command = {
+    var command: ApigeeGenInput = {
       name: name,
+      proxyType: proxyTypes.programmable,
       basePath: "/" + basePath,
       targetUrl: "https://" + target,
-      auth: [{}]
+      quotas: [],
+      auth: []
     }
 
     if (authApiKey) command.auth.push({
-      type: "apikey",
+      type: authTypes.apikey,
       parameters: {}
     });
     if (authSharedFlow) command.auth.push({
-      type: "sharedflow",
+      type: authTypes.sharedflow,
       parameters: {
         audience: authSharedFlowAudience,
         roles: authSharedFlowRoles,
@@ -109,6 +113,17 @@ function App() {
 
       }
     });
+
+    if (spikeArrest) 
+      command.spikeArrest = {
+        rate: "20s"
+      }
+
+    if (quota)
+      command.quotas = [{
+        count: 200,
+        timeUnit: "day"
+      }];
 
     return command;
   }
@@ -157,7 +172,7 @@ function App() {
 
       <div className="w-full sm:mt-[100px] sm:mb-[150px] content-center justify-center">
         <div className="w-full sm:w-2/3 bg-gray-50 rounded-xl m-auto">
-          <div className="bg-white rounded shadow px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div className="border-2 border-gray-200 bg-white rounded-xl shadow-md px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div>
               <div className="lg:grid lg:grid-cols-3 lg:gap-6">
                 <div className="lg:col-span-1">
@@ -319,6 +334,52 @@ function App() {
                               The environment in case the API should be deployed.
                             </p>
                           </div>
+                        </div>
+
+                        <div className="col-span-6 sm:col-span-3">
+                          <fieldset>
+                            <legend className="block text-sm font-medium text-gray-700">Traffic Management</legend>
+                            <div className="mt-4 space-y-4">
+                              <div className="flex items-start">
+                                <div className="flex items-center h-5">
+                                  <input
+                                    id="spikearrest"
+                                    name="spikearrest"
+                                    type="checkbox"
+                                    className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                    defaultChecked={spikeArrest}
+                                    onChange={(e) => setSpikeArrest(e.target.checked)}
+                                  />
+                                </div>
+                                <div className="ml-3 text-sm">
+                                  <label htmlFor="apikey" className="font-medium text-gray-700">
+                                    Spike Arrest
+                                  </label>
+                                  <p className="text-gray-500">Protect backends by limiting spikes to max 20 calls/s.</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-4 space-y-4">
+                              <div className="flex items-start">
+                                <div className="flex items-center h-5">
+                                  <input
+                                    id="quota"
+                                    name="quota"
+                                    type="checkbox"
+                                    className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                    defaultChecked={quota}
+                                    onChange={(e) => setQuota(e.target.checked)}
+                                  />
+                                </div>
+                                <div className="ml-3 text-sm">
+                                  <label htmlFor="apikey" className="font-medium text-gray-700">
+                                    Developer Quota
+                                  </label>
+                                  <p className="text-gray-500">Throttle developers to 200 calls per day at the base plan.</p>
+                                </div>
+                              </div>
+                            </div>
+                          </fieldset>
                         </div>
 
                         <div className="col-span-6 sm:col-span-3">
@@ -516,5 +577,42 @@ function App() {
     </div>
   );
 }
+
+interface ApigeeGenInput {
+  name: string;
+  proxyType: proxyTypes;
+  basePath: string;
+  targetUrl: string;
+  auth: authConfig[];
+  quotas?: quotaConfig[];
+  spikeArrest?: spikeArrestConfig;
+}
+
+interface authConfig {
+  type: authTypes;
+  parameters: {[key: string]: string};
+}
+
+interface quotaConfig {
+  count: number;
+  timeUnit: string;
+  condition?: string;
+}
+
+interface spikeArrestConfig {
+  rate: string;
+}
+
+enum proxyTypes {
+  programmable = "programmable",
+  configurable = "configurable"
+}
+
+enum authTypes {
+  apikey = "apikey",
+  jwt = "jwt",
+  sharedflow = "sharedflow"
+}
+
 
 export default App;

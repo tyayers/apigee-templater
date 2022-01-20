@@ -5,9 +5,8 @@ import morgan from 'morgan'
 
 import { ApigeeService, ApiManagementInterface, ProxyRevision, ProxyDeployment} from 'apigee-x-module'
 
-import { apigeegen } from '../lib/apigeegen-types';
-import { ApigeeGenService, ApigeeGenPlugin } from "../lib/apigeegen-interface";
-import { ApigeeGenerator } from '../lib/apigeegen-service';
+import { ApigeeGenService, ApigeeGenInput, proxyTypes, authTypes } from '../lib/interfaces';
+import { ApigeeGenerator } from '../lib/service';
 
 const apigeeGenerator: ApigeeGenService = new ApigeeGenerator();
 const apigeeService: ApiManagementInterface = new ApigeeService();
@@ -18,6 +17,50 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.static('public'));
+
+// special JSON conversion middleware
+app.use((req, res, next) => {
+  if (req.body && req.body.api) {
+    try {
+      var newInput: ApigeeGenInput = {
+        name: req.body.product.apiTestBackendProduct.productName,
+        proxyType: proxyTypes.programmable,
+        basePath: req.body.product.apiTestBackendProduct.productName,
+        targetUrl: req.body.environments[0].backendBaseUrl,
+        auth: [
+          {
+            type: authTypes.sharedflow,
+            parameters: {}
+          }
+        ]
+      };
+
+      if (req.body.api.policies && req.body.api.policies.inbound && req.body.api.policies.inbound.totalThrottlingEnabled) {
+        newInput.quotas = [{
+          count: 200,
+          timeUnit: "day"
+        }]
+      }
+
+      if (req.body.environments && req.body.environments.length > 0 && req.body.environments[0].backendAudienceConfiguration) {
+        newInput.auth[0].parameters["audience"] = req.body.environments[0].backendAudienceConfiguration.backendAudience;
+      }      
+      if (req.body.api.policies && req.body.api.policies.inbound && req.body.api.policies.inbound.validateJwtTokenAzureAdV1) {
+        newInput.auth[0].parameters["issuerVer1"] = "https://sts.windows.net/30f52344-4663-4c2e-bab3-61bf24ebbed8/";
+      }
+      if (req.body.api.policies && req.body.api.policies.inbound && req.body.api.policies.inbound.validateJwtTokenAzureAdV2) {
+        newInput.auth[0].parameters["issuerVer2"] = "https://login.microsoftonline.com/30f52344-4663-4c2e-bab3-61bf24ebbed8/v2.0";
+      }
+
+      req.body = newInput;
+    }
+    catch(error) {
+      console.log(error);
+    }
+  }
+
+  next();
+});
 
 app.post('/apigeegen/deployment/:environment', (req, res) => {
   console.log(JSON.stringify(req.body));
@@ -31,7 +74,7 @@ app.post('/apigeegen/deployment/:environment', (req, res) => {
     return;
   }
 
-  let genInput: apigeegen = req.body as apigeegen;
+  let genInput: ApigeeGenInput = req.body as ApigeeGenInput;
   var _proxyDir = "proxies/" + genInput.name + "/apiproxy/";
 
   fs.mkdirSync(_proxyDir, { recursive: true });
@@ -76,7 +119,7 @@ app.post('/apigeegen/deployment/:environment', (req, res) => {
 app.post('/apigeegen/file', (req, res) => {
   console.log(JSON.stringify(req.body));
 
-  let genInput: apigeegen = req.body as apigeegen;
+  let genInput: ApigeeGenInput = req.body as ApigeeGenInput;
   var _proxyDir = "proxies/" + genInput.name + "/apiproxy/";
 
   fs.mkdirSync(_proxyDir, { recursive: true });

@@ -4,10 +4,18 @@
     <FaultRules/>
     <Properties/>
     <Parameters>
+        {{#if audience}}
         <Parameter name="audience">{{audience}}</Parameter>
+        {{/if}}
+        {{#if roles}}
         <Parameter name="roles">{{roles}}</Parameter>
+        {{/if}}
+        {{#if issuerVer1}}
         <Parameter name="issuerVer1">{{issuerVer1}}</Parameter>
+        {{/if}}
+        {{#if issuerVer2}}
         <Parameter name="issuerVer2">{{issuerVer2}}</Parameter>
+        {{/if}}
     </Parameters>
     <SharedFlowBundle>Shared-Flow_GCP_API</SharedFlowBundle>
 </FlowCallout>
