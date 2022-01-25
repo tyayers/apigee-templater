@@ -36,10 +36,30 @@ You can also use the service without the frontend using REST calls, for example 
 curl --location --request POST 'http://localhost:8080/apigeegen/deployment/test1' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "name": "testproxy",
-    "targetUrl": "https://httpbin.org",
-    "basePath": "/httpbin",
-    "auth": ["apikey"]
+  "name": "testproxy",
+  "proxyType": "programmable",
+  "proxyEndpoints": [
+    {
+      "name": "default",
+      "basePath": "/httpbin",
+      "targetName": "default",
+      "targetUrl": "https://httpbin.org",
+      "auth": [
+        {
+          "type": "apikey"
+        }
+      ],
+      "quotas": [
+        {
+          "count": 30,
+          "timeUnit": "minute"
+        }
+      ],
+      "spikeArrest": {
+        "rate": "30s"
+      }
+    }
+  ]
 }'
 ```
 
@@ -49,10 +69,30 @@ This call downloads the generated proxy bundle:
 curl --location --request POST 'http://localhost:8080/apigeegen/file' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "name": "testproxy",
-    "targetUrl": "https://httpbin.org",
-    "basePath": "/httpbin",
-    "auth": ["apikey"]
+  "name": "testproxy",
+  "proxyType": "programmable",
+  "proxyEndpoints": [
+    {
+      "name": "default",
+      "basePath": "/httpbin",
+      "targetName": "default",
+      "targetUrl": "https://httpbin.org",
+      "auth": [
+        {
+          "type": "apikey"
+        }
+      ],
+      "quotas": [
+        {
+          "count": 30,
+          "timeUnit": "minute"
+        }
+      ],
+      "spikeArrest": {
+        "rate": "30s"
+      }
+    }
+  ]
 }'
 ```
 

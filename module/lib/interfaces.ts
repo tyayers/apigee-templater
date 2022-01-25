@@ -1,9 +1,15 @@
 interface ApigeeGenInput {
   name: string;
   proxyType: proxyTypes;
+  proxyEndpoints: proxyEndpoint[];
+}
+
+interface proxyEndpoint {
+  name: string;
   basePath: string;
+  targetName?: string;
   targetUrl: string;
-  auth: authConfig[];
+  auth?: authConfig[];
   quotas?: quotaConfig[];
   spikeArrest?: spikeArrestConfig;
 }
@@ -38,12 +44,13 @@ export interface ApigeeGenService {
   generateProxy(inputConfig: ApigeeGenInput, outputDir: string): Promise<boolean>
 }
 
-export interface ApigeeGenPlugin {
-  applyTemplate(inputConfig: ApigeeGenInput, processingVars: Map<string, any>, outputDir: string): Promise<boolean>
+export interface ApigeeGenProxyPlugin {
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>, outputDir: string): Promise<boolean>
 }
 
 export {
   ApigeeGenInput,
+  proxyEndpoint,
   authTypes,
   proxyTypes,
   quotaConfig,

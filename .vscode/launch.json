@@ -16,6 +16,6 @@
       "env": {
         "GOOGLE_APPLICATION_CREDENTIALS": "/home/tylerayers/key.json"
       }
-    }
+    }  
   ]
 }
