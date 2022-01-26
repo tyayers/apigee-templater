@@ -90,7 +90,7 @@ function App() {
   }
 
   function generateCommand() {
-    var command: ApigeeGenInput = {
+    var command: ApigeeTemplateInput = {
       name: name,
       proxyType: proxyTypes.programmable,
       basePath: "/" + basePath,
@@ -578,7 +578,7 @@ function App() {
   );
 }
 
-interface ApigeeGenInput {
+interface ApigeeTemplateInput {
   name: string;
   proxyType: proxyTypes;
   basePath: string;

@@ -1,8 +1,8 @@
 import fs from 'fs';
 import Handlebars from 'handlebars';
-import { ApigeeGenProxyPlugin, ApigeeGenInput, proxyEndpoint, authTypes, quotaConfig } from "../interfaces";
+import { ApigeeTemplatePlugin, ApigeeTemplateInput, proxyEndpoint, authTypes, quotaConfig, PlugInResult } from "../interfaces";
 
-export class QuotaPlugin implements ApigeeGenProxyPlugin {
+export class QuotaPlugin implements ApigeeTemplatePlugin {
 
   snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Quota continueOnError="false" enabled="true" name="Quota-{{index}}" type="calendar">
@@ -22,24 +22,28 @@ export class QuotaPlugin implements ApigeeGenProxyPlugin {
 
   template: any = Handlebars.compile(this.snippet);
 
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>, outputDir: string): Promise<boolean> {
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult> {
     return new Promise((resolve, reject) => {
+      let fileResult: PlugInResult = new PlugInResult();
 
       if (inputConfig.quotas && inputConfig.quotas.length > 0) {
 
+        fileResult.files = [];
         for (var i in inputConfig.quotas) {
-          fs.writeFileSync(outputDir + "/policies/Quota-" + (Number(i) + 1).toString() + ".xml",
-            this.template({
+          fileResult.files.push({
+            path: "/policies/Quota-" + (Number(i) + 1).toString() + ".xml",
+            contents: this.template({
               index: (Number(i) + 1),
               count: inputConfig.quotas[i].count,
               timeUnit: inputConfig.quotas[i].timeUnit
-          }));
+            })
+          });
 
-          processingVars["preflow_request_policies"].push("Quota-" + (Number(i) + 1).toString());
+          processingVars["preflow_request_policies"].push({name: "Quota-" + (Number(i) + 1).toString()});
         }
       }
 
-      resolve(true);
+      resolve(fileResult);
     });
   }
 }

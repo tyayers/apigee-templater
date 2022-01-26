@@ -1,8 +1,8 @@
 import fs from 'fs';
 import Handlebars from 'handlebars';
-import { ApigeeGenProxyPlugin, ApigeeGenInput, proxyEndpoint, authTypes } from "../interfaces";
+import { ApigeeTemplatePlugin, ApigeeTemplateInput, proxyEndpoint, authTypes, PlugInResult } from "../interfaces";
 
-export class AuthSfPlugin implements ApigeeGenProxyPlugin {
+export class AuthSfPlugin implements ApigeeTemplatePlugin {
 
   snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <FlowCallout continueOnError="false" enabled="true" name="VerifyJWT">
@@ -28,24 +28,31 @@ export class AuthSfPlugin implements ApigeeGenProxyPlugin {
 
   template: any = Handlebars.compile(this.snippet);
 
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>, outputDir: string): Promise<boolean> {
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult> {
     return new Promise((resolve, reject) => {
+      
+      let fileResult: PlugInResult = new PlugInResult();
 
       if (inputConfig.auth && inputConfig.auth.filter(e => e.type === authTypes.sharedflow).length > 0) {
         
         var authConfig = inputConfig.auth.filter(e => e.type === authTypes.sharedflow)[0];
-        fs.writeFileSync(outputDir + "/policies/VerifyJWT" + ".xml",
-          this.template({
-            audience: authConfig.parameters["audience"],
-            roles: authConfig.parameters["roles"],
-            issuerVer1: authConfig.parameters["issuerVer1"],
-            issuerVer2: authConfig.parameters["issuerVer2"]
-          }));
 
-        processingVars["preflow_request_policies"].push("VerifyJWT");
+        fileResult.files = [
+          {
+            path: "/policies/remove-query-param-apikey.xml",
+            contents: this.template({
+              audience: authConfig.parameters["audience"],
+              roles: authConfig.parameters["roles"],
+              issuerVer1: authConfig.parameters["issuerVer1"],
+              issuerVer2: authConfig.parameters["issuerVer2"]
+            })
+          }
+        ];
+
+        processingVars["preflow_request_policies"].push({name: "VerifyJWT"});
       }
 
-      resolve(true);
+      resolve(fileResult);
     });
   }
 }

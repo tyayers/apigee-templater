@@ -5,6 +5,19 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Debug CLI",
+      "type": "node",
+      "request": "launch",
+      "args": ["${workspaceRoot}/cli/bin/apigee-template", "-f", "/home/tylerayers/Temp/input.json", "--deploy", "true", "--environment", "test1"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "sourceMaps": true,
+      "cwd": "${workspaceRoot}/cli",
+      "protocol": "inspector",
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "/home/tylerayers/key.json"
+      }
+    },
+    {
       "name": "Debug Node TS Service",
       "type": "node",
       "request": "launch",
@@ -16,6 +29,6 @@
       "env": {
         "GOOGLE_APPLICATION_CREDENTIALS": "/home/tylerayers/key.json"
       }
-    }  
+    }
   ]
 }

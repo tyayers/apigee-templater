@@ -1,8 +1,8 @@
 import fs from 'fs';
 import Handlebars from 'handlebars';
-import { ApigeeGenProxyPlugin, ApigeeGenInput, proxyEndpoint, authTypes } from "../interfaces";
+import { ApigeeTemplatePlugin, ApigeeTemplateInput, PlugInResult, proxyEndpoint, authTypes, PlugInFile } from "../interfaces";
 
-export class AuthApiKeyPlugin implements ApigeeGenProxyPlugin {
+export class AuthApiKeyPlugin implements ApigeeTemplatePlugin {
 
   apikey_snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <VerifyAPIKey async="false" continueOnError="false" enabled="true" name="verify-api-key">
@@ -25,24 +25,31 @@ export class AuthApiKeyPlugin implements ApigeeGenProxyPlugin {
   apikey_template: any = Handlebars.compile(this.apikey_snippet);
   removekey_template: any = Handlebars.compile(this.removekey_snippet);
 
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>, outputDir: string): Promise<boolean> {
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult> {
     return new Promise((resolve, reject) => {
+
+      let fileResult: PlugInResult = new PlugInResult();
 
       if (inputConfig.auth && inputConfig.auth.filter(e => e.type === authTypes.apikey).length > 0) {
 
         var authConfig = inputConfig.auth.filter(e => e.type === authTypes.apikey)[0];
 
-        fs.writeFileSync(outputDir + "/policies/verify-api-key" + ".xml",
-          this.apikey_template({}));
+        fileResult.files = [
+          {
+            path: "/policies/verify-api-key.xml",
+            contents: this.apikey_template({})
+          },
+          {
+            path: "/policies/remove-query-param-apikey.xml",
+            contents: this.removekey_template({})
+          }
+        ];
 
-        fs.writeFileSync(outputDir + "/policies/remove-query-param-apikey" + ".xml",
-          this.removekey_template({}));
-
-        processingVars["preflow_request_policies"].push("verify-api-key");
-        processingVars["preflow_request_policies"].push("remove-query-param-apikey");
+        processingVars["preflow_request_policies"].push({name: "verify-api-key"});
+        processingVars["preflow_request_policies"].push({name: "remove-query-param-apikey"});
       }
 
-      resolve(true);
+      resolve(fileResult);
     });
   }
 }

@@ -1,10 +1,10 @@
-interface ApigeeGenInput {
+export interface ApigeeTemplateInput {
   name: string;
   proxyType: proxyTypes;
   proxyEndpoints: proxyEndpoint[];
 }
 
-interface proxyEndpoint {
+export interface proxyEndpoint {
   name: string;
   basePath: string;
   targetName?: string;
@@ -14,45 +14,45 @@ interface proxyEndpoint {
   spikeArrest?: spikeArrestConfig;
 }
 
-interface authConfig {
+export interface authConfig {
   type: authTypes;
   parameters: {[key: string]: string};
 }
 
-interface quotaConfig {
+export interface quotaConfig {
   count: number;
   timeUnit: string;
   condition?: string;
 }
 
-interface spikeArrestConfig {
+export interface spikeArrestConfig {
   rate: string;
 }
 
-enum proxyTypes {
+export enum proxyTypes {
   programmable = "programmable",
   configurable = "configurable"
 }
 
-enum authTypes {
+export enum authTypes {
   apikey = "apikey",
   jwt = "jwt",
   sharedflow = "sharedflow"
 }
 
-export interface ApigeeGenService {
-  generateProxy(inputConfig: ApigeeGenInput, outputDir: string): Promise<boolean>
+export interface ApigeeTemplateService {
+  generateProxy(inputConfig: ApigeeTemplateInput, outputDir: string): Promise<boolean>
 }
 
-export interface ApigeeGenProxyPlugin {
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>, outputDir: string): Promise<boolean>
+export class PlugInResult {
+  files: PlugInFile[];
 }
 
-export {
-  ApigeeGenInput,
-  proxyEndpoint,
-  authTypes,
-  proxyTypes,
-  quotaConfig,
-  spikeArrestConfig
+export class PlugInFile {
+  path: string;
+  contents: string;
+}
+
+export interface ApigeeTemplatePlugin {
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult>
 }

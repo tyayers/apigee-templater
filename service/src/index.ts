@@ -4,10 +4,22 @@ import cors from 'cors';
 import morgan from 'morgan'
 
 import { ApigeeService, ApiManagementInterface, ProxyRevision, ProxyDeployment} from 'apigee-x-module'
+import { ApigeeGenService, ApigeeGenerator, ApigeeTemplateInput, proxyTypes, authTypes } from 'apigee-templater-module';
+import { ProxiesPlugin } from "apigee-templater-module";
+import { TargetsPlugin } from "apigee-templater-module";
+import { AuthSfPlugin } from "apigee-templater-module";
+import { AuthApiKeyPlugin } from "apigee-templater-module";
+import { QuotaPlugin } from "apigee-templater-module";
+import { SpikeArrestPlugin } from "apigee-templater-module";
 
-import { ApigeeGenService, ApigeeGenerator, ApigeeGenInput, proxyTypes, authTypes } from 'apigee-templater-module';
-
-const apigeeGenerator: ApigeeGenService = new ApigeeGenerator();
+const apigeeGenerator: ApigeeGenService = new ApigeeGenerator([
+  new SpikeArrestPlugin(),
+  new AuthApiKeyPlugin(),
+  new AuthSfPlugin(),
+  new QuotaPlugin(),
+  new TargetsPlugin(),
+  new ProxiesPlugin(),
+]);
 const apigeeService: ApiManagementInterface = new ApigeeService();
 
 const app = express();
@@ -22,7 +34,7 @@ app.use((req, res, next) => {
   if (req.body && req.body.api) {
     var input = req.body;
     try {
-      var newInput: ApigeeGenInput = {
+      var newInput: ApigeeTemplateInput = {
         name: input.product.apiTestBackendProduct.productName,
         proxyType: proxyTypes.programmable,
         proxyEndpoints: [
@@ -80,7 +92,7 @@ app.post('/apigeegen/deployment/:environment', (req, res) => {
     return;
   }
 
-  let genInput: ApigeeGenInput = req.body as ApigeeGenInput;
+  let genInput: ApigeeTemplateInput = req.body as ApigeeTemplateInput;
   var _proxyDir = "./proxies";
 
   fs.mkdirSync(_proxyDir, { recursive: true });
@@ -129,7 +141,7 @@ app.post('/apigeegen/deployment/:environment', (req, res) => {
 app.post('/apigeegen/file', (req, res) => {
   console.log(JSON.stringify(req.body));
 
-  let genInput: ApigeeGenInput = req.body as ApigeeGenInput;
+  let genInput: ApigeeTemplateInput = req.body as ApigeeTemplateInput;
   var _proxyDir = "./proxies";
 
   fs.mkdirSync(_proxyDir, { recursive: true });

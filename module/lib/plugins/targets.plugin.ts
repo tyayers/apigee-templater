@@ -1,8 +1,8 @@
 import fs from 'fs';
 import Handlebars from 'handlebars';
-import { ApigeeGenProxyPlugin, proxyEndpoint } from "../interfaces";
+import { ApigeeTemplatePlugin, PlugInResult, proxyEndpoint } from "../interfaces";
 
-export class TargetsPlugin implements ApigeeGenProxyPlugin {
+export class TargetsPlugin implements ApigeeTemplatePlugin {
 
   snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <TargetEndpoint name="{{targetName}}">
@@ -22,13 +22,18 @@ export class TargetsPlugin implements ApigeeGenProxyPlugin {
 
   template: any = Handlebars.compile(this.snippet);
 
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>, outputDir: string): Promise<boolean> {
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult> {
     return new Promise((resolve, reject) => {
+      let fileResult: PlugInResult = new PlugInResult();
 
-      fs.writeFileSync(outputDir + "/targets/" + inputConfig.targetName + ".xml",
-        this.template({targetName: inputConfig.targetName, targetUrl: inputConfig.targetUrl}));
+      fileResult.files = [
+        {
+          path: "/targets/" + inputConfig.targetName + ".xml",
+          contents: this.template({targetName: inputConfig.targetName, targetUrl: inputConfig.targetUrl})
+        }
+      ];
 
-      resolve(true);
+      resolve(fileResult);
     });
   }
 }

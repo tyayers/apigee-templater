@@ -1,8 +1,8 @@
 import fs from 'fs';
 import Handlebars from 'handlebars';
-import { ApigeeGenProxyPlugin, proxyEndpoint } from "../interfaces";
+import { ApigeeTemplatePlugin, PlugInResult, proxyEndpoint } from "../interfaces";
 
-export class ProxiesPlugin implements ApigeeGenProxyPlugin {
+export class ProxiesPlugin implements ApigeeTemplatePlugin {
 
   snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <ProxyEndpoint name="default">
@@ -10,7 +10,7 @@ export class ProxiesPlugin implements ApigeeGenProxyPlugin {
           <Request>
             {{#each preflow_request_policies}}
               <Step>
-                <Name>{{this}}</Name>
+                <Name>{{this.name}}</Name>
               </Step>
             {{/each}}
           </Request>
@@ -31,22 +31,25 @@ export class ProxiesPlugin implements ApigeeGenProxyPlugin {
 
   template: any = Handlebars.compile(this.snippet);
 
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>, outputDir: string): Promise<boolean> {
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult> {
     return new Promise((resolve, reject) => {
-
-      fs.writeFileSync(outputDir + "/proxies/" + inputConfig.name + ".xml",
-        this.template(
+      let fileResult: PlugInResult = new PlugInResult();
+      fileResult.files = [
         {
-          basePath: inputConfig.basePath, 
-          targetName: inputConfig.targetName, 
-          preflow_request_policies: processingVars["preflow_request_policies"],
-          preflow_response_policies: processingVars["preflow_response_policies"],
-          postflow_request_policies: processingVars["postflow_request_policies"],
-          postflow_response_policies: processingVars["postflow_response_policies"],          
-        })
-      );
+          path: "/proxies/" + inputConfig.name + ".xml",
+          contents: this.template(
+            {
+              basePath: inputConfig.basePath, 
+              targetName: inputConfig.targetName, 
+              preflow_request_policies: processingVars["preflow_request_policies"],
+              preflow_response_policies: processingVars["preflow_response_policies"],
+              postflow_request_policies: processingVars["postflow_request_policies"],
+              postflow_response_policies: processingVars["postflow_response_policies"],          
+            })
+        }
+      ];
 
-      resolve(true);
+      resolve(fileResult);
     });
   }
 }

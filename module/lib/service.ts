@@ -1,4 +1,4 @@
-import { ApigeeGenService, ApigeeGenProxyPlugin } from "./interfaces";
+import { ApigeeTemplateService, ApigeeTemplatePlugin, ApigeeTemplateInput, PlugInResult, PlugInFile } from "./interfaces";
 import { ProxiesPlugin } from "./plugins/proxies.plugin";
 import { TargetsPlugin } from "./plugins/targets.plugin";
 import { AuthSfPlugin } from "./plugins/auth.sf.plugin";
@@ -9,12 +9,10 @@ import { SpikeArrestPlugin } from "./plugins/traffic.spikearrest.plugin";
 import archiver from 'archiver';
 import fs from 'fs';
 
-import { ApigeeGenInput } from "./interfaces";
-
-export class ApigeeGenerator implements ApigeeGenService {
+export class ApigeeGenerator implements ApigeeTemplateService {
 
   // Default Plugins
-  plugins: ApigeeGenProxyPlugin[] = [
+  plugins: ApigeeTemplatePlugin[] = [
     new SpikeArrestPlugin(),
     new AuthApiKeyPlugin(),
     new AuthSfPlugin(),
@@ -23,12 +21,12 @@ export class ApigeeGenerator implements ApigeeGenService {
     new ProxiesPlugin(),
   ];
 
-  constructor(plugins: ApigeeGenProxyPlugin[]) {
+  constructor(plugins: ApigeeTemplatePlugin[]) {
     if (plugins)
       this.plugins = plugins;
   }
 
-  generateProxy(genInput: ApigeeGenInput, outputDir: string): Promise<boolean> {
+  generateProxy(genInput: ApigeeTemplateInput, outputDir: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       let processingVars: Map<string, any> = new Map<string, any>();
       let newOutputDir = outputDir + "/" + genInput.name + "/apiproxy";
@@ -47,7 +45,11 @@ export class ApigeeGenerator implements ApigeeGenService {
         processingVars["postflow_response_policies"] = [];
 
         for (let plugin of this.plugins) {
-          let result = plugin.applyTemplate(endpoint, processingVars, newOutputDir);
+          plugin.applyTemplate(endpoint, processingVars).then((result: PlugInResult) => {
+            result.files.forEach((file: PlugInFile) => {
+              fs.writeFileSync(newOutputDir + file.path, file.contents);
+            });
+          });
         }
       }
     
