@@ -29,6 +29,26 @@
       "env": {
         "GOOGLE_APPLICATION_CREDENTIALS": "/home/tylerayers/key.json"
       }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test Module",
+      "program": "${workspaceFolder}/module/node_modules/mocha/bin/_mocha",
+      "args": [
+          "-r",
+          "ts-node/register",
+          "--timeout",
+          "999999",
+          "--colors",
+          "${workspaceFolder}/module/test/**/*.test.ts",
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "env":{
+        "GOOGLE_APPLICATION_CREDENTIALS": "/home/tylerayers/key.json"
+      }
     }
   ]
 }

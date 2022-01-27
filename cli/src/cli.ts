@@ -3,7 +3,8 @@ import fs from 'fs';
 import vm from 'vm';
 import inquirer from 'inquirer';
 import { ApigeeTemplateInput, ProxiesPlugin, TargetsPlugin, AuthSfPlugin, 
-  AuthApiKeyPlugin, QuotaPlugin, SpikeArrestPlugin, ApigeeTemplateService, ApigeeGenerator, proxyTypes, authTypes } from 'apigee-templater-module'
+  AuthApiKeyPlugin, QuotaPlugin, SpikeArrestPlugin, ApigeeTemplateService, 
+  ApigeeGenerator, proxyTypes, authTypes } from 'apigee-templater-module'
 import { ApigeeService, ApiManagementInterface, ProxyRevision, ProxyDeployment} from 'apigee-x-module'
 
 export default class cli {

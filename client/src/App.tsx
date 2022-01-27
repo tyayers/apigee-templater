@@ -1,3 +1,5 @@
+import { ApigeeTemplateInput, proxyTypes, authTypes } from 'apigee-templater-module'
+
 import { Buffer } from 'buffer';
 import React from 'react';
 import { useState } from 'react';
@@ -50,7 +52,7 @@ function App() {
       .then(blob => {
         toast.success("API file download successful!")
         var blobUrl = URL.createObjectURL(blob);
-        var anchor = document.createElement("a");
+        var anchor = document.createElement("a");basePath: "/" + basePath
         anchor.download = name + ".zip";
         anchor.href = blobUrl;
         anchor.click();
@@ -78,49 +80,60 @@ function App() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(command)
-      })
-      .then(response => {
-        if (response.status == 200) {
-          toast.success("API deployment successful!");
-        }
-        else {
-          toast.error("API deployment failed, possibly the environment doesn't exist?")
-        }
-      });
+      }
+    )
+    .then(response => {
+      if (response.status == 200) {
+        toast.success("API deployment successful!");
+      }
+      else {
+        toast.error("API deployment failed, possibly the environment doesn't exist?")
+      }
+    });
   }
 
   function generateCommand() {
     var command: ApigeeTemplateInput = {
       name: name,
       proxyType: proxyTypes.programmable,
-      basePath: "/" + basePath,
-      targetUrl: "https://" + target,
-      quotas: [],
-      auth: []
+      proxyEndpoints: [{
+        name: "default",
+        basePath: "/" + basePath,
+        targetUrl: "https://" + target,
+        quotas: [],
+        auth: []
+      }]
     }
 
-    if (authApiKey) command.auth.push({
-      type: authTypes.apikey,
-      parameters: {}
-    });
-    if (authSharedFlow) command.auth.push({
-      type: authTypes.sharedflow,
-      parameters: {
-        audience: authSharedFlowAudience,
-        roles: authSharedFlowRoles,
-        issuerVer1: authSharedFlowIssuer1,
-        issuerVer2: authSharedFlowIssuer2
-
-      }
-    });
+    if (authApiKey) {
+      command.proxyEndpoints[0].auth = [];
+      command.proxyEndpoints[0].auth.push({
+        type: authTypes.apikey,
+        parameters: {}
+      });
+    }
+    if (authSharedFlow) {
+      if (!command.proxyEndpoints[0].auth || command.proxyEndpoints[0].auth.length == 0)
+        command.proxyEndpoints[0].auth = [];
+      
+        command.proxyEndpoints[0].auth.push({
+        type: authTypes.sharedflow,
+        parameters: {
+          audience: authSharedFlowAudience,
+          roles: authSharedFlowRoles,
+          issuerVer1: authSharedFlowIssuer1,
+          issuerVer2: authSharedFlowIssuer2
+        }
+      });
+    }
 
     if (spikeArrest) 
-      command.spikeArrest = {
+      command.proxyEndpoints[0].spikeArrest = {
         rate: "20s"
       }
 
     if (quota)
-      command.quotas = [{
+      command.proxyEndpoints[0].quotas = [{
         count: 200,
         timeUnit: "day"
       }];
@@ -577,42 +590,5 @@ function App() {
     </div>
   );
 }
-
-interface ApigeeTemplateInput {
-  name: string;
-  proxyType: proxyTypes;
-  basePath: string;
-  targetUrl: string;
-  auth: authConfig[];
-  quotas?: quotaConfig[];
-  spikeArrest?: spikeArrestConfig;
-}
-
-interface authConfig {
-  type: authTypes;
-  parameters: {[key: string]: string};
-}
-
-interface quotaConfig {
-  count: number;
-  timeUnit: string;
-  condition?: string;
-}
-
-interface spikeArrestConfig {
-  rate: string;
-}
-
-enum proxyTypes {
-  programmable = "programmable",
-  configurable = "configurable"
-}
-
-enum authTypes {
-  apikey = "apikey",
-  jwt = "jwt",
-  sharedflow = "sharedflow"
-}
-
 
 export default App;

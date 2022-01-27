@@ -41,18 +41,29 @@ export enum authTypes {
 }
 
 export interface ApigeeTemplateService {
-  generateProxy(inputConfig: ApigeeTemplateInput, outputDir: string): Promise<boolean>
+  generateProxyFromString(inputString: string, outputDir: string): Promise<GenerateResult>
+  generateProxy(inputConfig: ApigeeTemplateInput, outputDir: string): Promise<GenerateResult>
+}
+
+export class GenerateResult {
+  success: boolean = false;
+  duration: number = 0;
+  message: string = "";
 }
 
 export class PlugInResult {
-  files: PlugInFile[];
+  files: PlugInFile[] = [];
 }
 
 export class PlugInFile {
-  path: string;
-  contents: string;
+  path: string = "";
+  contents: string = "";
 }
 
 export interface ApigeeTemplatePlugin {
   applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult>
+}
+
+export interface ApigeeConverterPlugin {
+  convertInput(input: string): Promise<ApigeeTemplateInput>
 }

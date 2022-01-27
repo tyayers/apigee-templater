@@ -1,0 +1,25 @@
+{
+  "name": "testproxy",
+  "proxyEndpoints": [
+    {
+      "name": "default",
+      "basePath": "/httpbin",
+      "targetName": "default",
+      "targetUrl": "https://httpbin.org",
+      "quotas": [
+        {
+          "count": "200",
+          "timeUnit": "day"
+        }
+      ],
+      "spikeArrest": {
+        "rate": "20s"
+      },
+      "auth": [
+        {
+          "type": "apikey"
+        }
+      ]
+    }
+  ]
+}
