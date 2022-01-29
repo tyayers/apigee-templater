@@ -165,7 +165,7 @@ function App() {
 
         if (!name) {
           if (specObj && specObj.info && specObj.info.title)
-            setName(specObj.info.title.replace(" ", "-"))
+            setName(specObj.info.title.replace(/ /g, "-"))
         }
 
         if (!basePath) {
@@ -215,7 +215,7 @@ function App() {
                                 className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block rounded-md sm:text-sm border-gray-300 border"
                                 placeholder="Super-API"
                                 value={name}
-                                onChange={(e) => setName(e.target.value.replace(" ", "-"))}
+                                onChange={(e) => setName(e.target.value.replace(/ /g, "-"))}
                               />
                             </div>
                             <p className="mt-2 text-sm text-gray-500">

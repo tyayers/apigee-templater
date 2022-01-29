@@ -31,9 +31,9 @@
       }
     },
     {
+      "name": "Test Module",
       "type": "node",
       "request": "launch",
-      "name": "Test Module",
       "program": "${workspaceFolder}/module/node_modules/mocha/bin/_mocha",
       "args": [
           "-r",
@@ -44,6 +44,7 @@
           "${workspaceFolder}/module/test/**/*.test.ts",
       ],
       "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/module",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "env":{

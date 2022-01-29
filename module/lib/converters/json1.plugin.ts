@@ -6,7 +6,9 @@ export class Json1Converter implements ApigeeConverterPlugin {
       let result: ApigeeTemplateInput = undefined;
 
       try {
-        result = JSON.parse(input) as ApigeeTemplateInput;
+        let inputData = JSON.parse(input);
+        if (inputData.name && inputData.proxyEndpoints)
+          result = inputData as ApigeeTemplateInput;
       }
       catch(error) {
         console.error(error);

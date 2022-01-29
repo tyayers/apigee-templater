@@ -39,7 +39,7 @@ export class AuthSfPlugin implements ApigeeTemplatePlugin {
 
         fileResult.files = [
           {
-            path: "/policies/remove-query-param-apikey.xml",
+            path: "/policies/VerifyJWT.xml",
             contents: this.template({
               audience: authConfig.parameters["audience"],
               roles: authConfig.parameters["roles"],

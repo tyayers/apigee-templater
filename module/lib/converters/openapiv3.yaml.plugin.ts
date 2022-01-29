@@ -1,4 +1,4 @@
-import { jsyaml } from "js-yaml";
+import yaml from "js-yaml";
 import { ApigeeConverterPlugin, ApigeeTemplateInput, authTypes, proxyTypes } from "../interfaces";
 
 export class OpenApiV3Converter implements ApigeeConverterPlugin {
@@ -7,7 +7,7 @@ export class OpenApiV3Converter implements ApigeeConverterPlugin {
       let result: ApigeeTemplateInput = undefined;
 
       try {
-        const specObj = jsyaml.load(input);
+        const specObj = yaml.load(input);
 
         if (specObj && specObj.servers && specObj.servers.length > 0) {
 

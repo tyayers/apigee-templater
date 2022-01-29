@@ -5,13 +5,13 @@ import { ApigeeTemplatePlugin, ApigeeTemplateInput, PlugInResult, proxyEndpoint,
 export class AuthApiKeyPlugin implements ApigeeTemplatePlugin {
 
   apikey_snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-  <VerifyAPIKey async="false" continueOnError="false" enabled="true" name="verify-api-key">
+  <VerifyAPIKey async="false" continueOnError="false" enabled="true" name="VerifyApiKey">
       <DisplayName>Verify API Key</DisplayName>
       <APIKey ref="request.queryparam.apikey"/>
   </VerifyAPIKey>`;
 
   removekey_snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-  <AssignMessage async="false" continueOnError="false" enabled="true" name="remove-query-param-apikey">
+  <AssignMessage async="false" continueOnError="false" enabled="true" name="RemoveApiKey">
       <DisplayName>Remove Query Param apikey</DisplayName>
       <Remove>
           <QueryParams>
@@ -36,17 +36,17 @@ export class AuthApiKeyPlugin implements ApigeeTemplatePlugin {
 
         fileResult.files = [
           {
-            path: "/policies/verify-api-key.xml",
+            path: "/policies/VerifyApiKey.xml",
             contents: this.apikey_template({})
           },
           {
-            path: "/policies/remove-query-param-apikey.xml",
+            path: "/policies/RemoveApiKey.xml",
             contents: this.removekey_template({})
           }
         ];
 
-        processingVars["preflow_request_policies"].push({name: "verify-api-key"});
-        processingVars["preflow_request_policies"].push({name: "remove-query-param-apikey"});
+        processingVars["preflow_request_policies"].push({name: "VerifyApiKey"});
+        processingVars["preflow_request_policies"].push({name: "RemoveApiKey"});
       }
 
       resolve(fileResult);

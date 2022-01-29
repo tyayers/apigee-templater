@@ -82,7 +82,8 @@ export class ApigeeGenerator implements ApigeeTemplateService {
       let result: GenerateResult = {
         success: true,
         duration: 0,
-        message: ""
+        message: "",
+        localPath: ""
       }
 
       let processingVars: Map<string, any> = new Map<string, any>();
@@ -124,7 +125,9 @@ export class ApigeeGenerator implements ApigeeTemplateService {
         fs.rmdirSync(outputDir + "/" + genInput.name, {recursive: true});
         var endTime = performance.now();
         result.duration = endTime - startTime;
-        result.message = `Proxy generation completed in ${result.duration} milliseconds.`
+        result.message = `Proxy generation completed in ${Math.round(result.duration)} milliseconds.`
+        result.localPath = outputDir + "/" + genInput.name + ".zip";
+        result.template = genInput;
 
         resolve(result);
       });

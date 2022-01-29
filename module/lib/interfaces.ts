@@ -1,6 +1,6 @@
 export interface ApigeeTemplateInput {
   name: string;
-  proxyType: proxyTypes;
+  proxyType?: proxyTypes;
   proxyEndpoints: proxyEndpoint[];
 }
 
@@ -49,6 +49,8 @@ export class GenerateResult {
   success: boolean = false;
   duration: number = 0;
   message: string = "";
+  localPath: string = "";
+  template?: ApigeeTemplateInput;
 }
 
 export class PlugInResult {
