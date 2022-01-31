@@ -13,6 +13,15 @@ import {
 } from 'apigee-templater-module'
 import { ApigeeService, ApiManagementInterface, ProxyRevision, ProxyDeployment } from 'apigee-x-module'
 
+
+/**
+ * The CLI class parses and collects the user inputs, and generates / depoys the proxy on-demand.
+ * @date 1/31/2022 - 8:47:32 AM
+ *
+ * @export
+ * @class cli
+ * @typedef {cli}
+ */
 export default class cli {
   apigeeService: ApiManagementInterface = new ApigeeService();
 
@@ -29,6 +38,14 @@ export default class cli {
     new OpenApiV3Converter()
   ]);
 
+
+  /**
+   * Parses the user inputs
+   * @date 1/31/2022 - 8:47:02 AM
+   *
+   * @param {*} rawArgs
+   * @returns {{ file: any; input: any; deploy: any; environment: any; filter: any; name: any; basePath: any; targetUrl: any; verbose: any; keyPath: any; help: any; }}
+   */
   parseArgumentsIntoOptions(rawArgs) {
     const args = arg(
       {
@@ -74,8 +91,12 @@ export default class cli {
     };
   }
 
-  async promptForMissingOptions(options: cliArgs): Promise<cliArgs> {
-
+  /**
+   * Prompts the user for any missing inputs
+   * @param {cliArgs} options The options collection of user inputs
+   * @returns {cliArgs} Updated cliArgs options collection
+   */
+   async promptForMissingOptions(options: cliArgs): Promise<cliArgs> {
     const questions = [];
     if (!options.name) {
       questions.push({
@@ -140,7 +161,14 @@ export default class cli {
         },
         choices: (answers) => {
           if (answers.keyPath) process.env.GOOGLE_APPLICATION_CREDENTIALS = answers.keyPath;
-          return this.apigeeService.getEnvironments()
+          let envs: string[] = [];
+
+          this.apigeeService.getEnvironments().then((result) => {
+            return result;
+          }).catch((error) => {
+            console.error(`${chalk.redBright("! Error:")} Invalid GCP service account key file passed, please pass a service account with Apigee deployment roles attached.`);
+            return [];
+          });
         }
       });
     }
@@ -163,33 +191,45 @@ export default class cli {
     };
   }
 
+  
+  /**
+   * Prints example and full commands
+   * @returns none
+   **/
   printHelp() {
     console.log("")
-    console.log(`${chalk.bold(chalk.greenBright("Simple examples:"))}`);
+    console.log(`${chalk.bold(chalk.blueBright("Simple examples:"))}`);
     console.log(`apigee-template ${chalk.grey("# Start interactive mode to enter the parameters.")}`)
     console.log(`apigee-template -n TestProxy -b /httpbin -t https://httpbin.org ${chalk.grey("# Create a proxy called TestProxy under the base path /test to https://httpbin.org > will produce a TestProxy.zip bundle.")}`)
     console.log(`apigee-template -n TestProxy -b /httpbin -t https://httpbin.org -d -e test1 ${chalk.grey("# Create a proxy called TestProxy and deploy to the Apigee X environment 'test1'.")}`)
     console.log(`apigee-template -f ./PetStore.yaml -d -e test1 ${chalk.grey("# Create a proxy based on the PetStore.yaml file and deploy to environment 'test1'")}`)
 
     console.log("");
-    console.log(`${chalk.bold(chalk.greenBright("All commands:"))}`);
+    console.log(`${chalk.bold(chalk.blueBright("All parameters:"))}`);
     for (let line of helpCommands) {
       console.log(`${chalk.bold(chalk.green(line.name))}: ${chalk.grey(line.description)} `)
     }
-    console.log("");
+    //console.log("");
   }
-
-  async process(args) {
+  
+  /**
+   * Process the user inputs and generates / deploys the proxy
+   * @date 1/31/2022 - 8:42:28 AM
+   *
+   * @async
+   * @param {cliArgs} args The user input args to the process 
+   * @returns {*} none
+   */
+  async process(args: cliArgs) {
     let options: cliArgs = this.parseArgumentsIntoOptions(args);
     if (options.keyPath) process.env.GOOGLE_APPLICATION_CREDENTIALS = options.keyPath;
     if (options.verbose) this.logVerbose(JSON.stringify(options), "options:");
+    
+    console.log(`${chalk.green(">")} ${chalk.bold(chalk.greenBright("Welcome to apigee-template"))}, use -h for more command line options. `);
 
     if (options.help) {
       this.printHelp();
       return;
-    }
-    else {
-      console.log(`${chalk.green(">")} ${chalk.bold(chalk.greenBright("Welcome to apigee-template"))}, use -h for more command line options. `);
     }
 
     if (fs.existsSync(options.file)) {
@@ -198,7 +238,13 @@ export default class cli {
 
     if (!options.input && !options.file) {
       if (process.env.GOOGLE_APPLICATION_CREDENTIALS) options.keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-      options = await this.promptForMissingOptions(options);
+      try {
+        options = await this.promptForMissingOptions(options);
+      }
+      catch(error) {
+        console.error(`${chalk.redBright("! Error:")} Invalid GCP service account key file passed, please pass a service account with Apigee deployment roles attached.`);
+      }
+
       let newInput: ApigeeTemplateInput = {
         name: options.name,
         proxyEndpoints: [
@@ -226,10 +272,10 @@ export default class cli {
       console.log(`${chalk.green(">")} Proxy ${chalk.bold(chalk.blue(result.template.name))} generated to ${chalk.magentaBright(chalk.bold(result.localPath))} in ${chalk.bold(chalk.green(Math.round(result.duration) + " milliseconds"))}.`);
 
       if (options.deploy && !options.environment) {
-        console.error(`${chalk.redBright("> Error:")} No environment found to deploy to, please pass the -e parameter with an Apigee X environment.`);
+        console.error(`${chalk.redBright("! Error:")} No environment found to deploy to, please pass the -e parameter with an Apigee X environment.`);
       }
       else if (options.deploy && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-        console.error(`${chalk.redBright("> Error:")} No GCP credentials found, please set the GOOGLE_APPLICATION_CREDENTIALS environment variable or use the -k parameter, see https://cloud.google.com/docs/authentication/getting-started for more information.`);
+        console.error(`${chalk.redBright("! Error:")} No GCP credentials found, please set the GOOGLE_APPLICATION_CREDENTIALS environment variable or use the -k parameter, see https://cloud.google.com/docs/authentication/getting-started for more information.`);
       }
       else if (options.deploy) {
         var startTime = performance.now();
@@ -240,23 +286,31 @@ export default class cli {
               var duration = endTime - startTime;
               console.log(`${chalk.green(">")} Proxy ${chalk.bold(chalk.blue(result.template.name + " version " + updateResult.revision))} deployed to environment ${chalk.bold(chalk.magentaBright(options.environment))} in ${chalk.bold(chalk.green(Math.round(duration) + " milliseconds"))}.`);
             }).catch((error) => {
-              console.error("Error deploying proxy. " + error);
+              console.error(`${chalk.redBright("! Error:")} Error deploying proxy revision.`);
             })
           }
         }).catch((error) => {
           if (error && error.response && error.response.status && error.response.status == 400)
-            console.error(`Error deploying ${result.template.name}, bundle has errors.`);
+            console.error(`${chalk.redBright("! Error:")} Error in proxy bundle definition, try importing manually for more detailed error information.`);
           else
-            console.error(`Error deploying ${result.template.name}.`);
+            console.error(`${chalk.redBright("! Error:")} Error deploying proxy revision.`);
         });
       }
     }).catch((error) => {
-      console.error("Error generating proxy. " + error);
+      console.error(`${chalk.redBright("! Error:")} Error templating proxy, invalid inputs given.`);
+      process.exit();
     });
 
   }
-
-  logVerbose(input, label) {
+  
+  /**
+   * Logs a verbose message to the console
+   * @date 1/31/2022 - 8:45:46 AM
+   *
+   * @param {string} input The text message to log
+   * @param {string} label An optional label as prefix label
+   */
+  logVerbose(input: string, label: string) {
     //console.log("");
     if (label) console.log(`${chalk.grey("> " + label)}`)
     console.log(`${chalk.grey("> " + input)}`)
@@ -264,6 +318,14 @@ export default class cli {
   }
 }
 
+
+/**
+ * Class to model the user input collection
+ * @date 1/31/2022 - 8:46:19 AM
+ *
+ * @class cliArgs
+ * @typedef {cliArgs}
+ */
 class cliArgs {
   file: string = "";
   input: string = "";
@@ -278,6 +340,13 @@ class cliArgs {
   help: boolean = false;
 }
 
+
+/**
+ * Collection of the help commands to print on-demand
+ * @date 1/31/2022 - 8:46:40 AM
+ *
+ * @type {{}}
+ */
 const helpCommands = [
   {
     name: "--file, -f",
