@@ -9,13 +9,16 @@ npm install -g apigee-template
 ```
 Use the CLI either in command or interactive mode.
 ```bash
-apigee-template -h #Show all commands
+#Show all commands
+apigee-template -h
 ```
 ```bash
-apigee-template -f ./samples/input.json -d -e test1 -k ./key.json #Generate a proxy based on input.json and deploy it to environment test1
+#Generate a proxy based on input.json and deploy it to environment test1
+apigee-template -f ./samples/input.json -d -e test1 -k ./key.json
 ```
 ```bash
-apigee-template #Use the CLI in interactive to supply inputs
+#Use the CLI in interactive to supply inputs
+apigee-template
 > Welcome to apigee-template, use -h for more command line options. 
 ? What should the proxy be called? MyProxy
 ? Which base path should be used? /test
