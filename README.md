@@ -1,5 +1,5 @@
 # Apigee Templater
-A tool for automating the templating of Apigee API proxies through either a **Typescript/Javascript** module, a **REST API**, or a **CLI**. The generated proxy can either be downloaded as a bundle, or deployed to an Apigee X environment.  
+A tool for automating the templating of Apigee API proxies through either a **CLI**, **REST API**, or **Typescript/Javascript** module. The generated proxy can either be downloaded as a bundle, or deployed to an Apigee X environment.  
 
 ## Examples
 ### CLI
