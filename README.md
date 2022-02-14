@@ -1,5 +1,5 @@
 # Apigee Templater
-A tool for automating the templating of Apigee API proxies through either a **Typescript/Javascript** module, a **REST API**, or a **CLI**. The generated proxy can either be downloaded as a bundle, or deployed to an Apigee X environment.  
+A tool for automating the templating of Apigee API proxies through either a **CLI**, **REST API**, or **Typescript/Javascript** module. The generated proxy can either be downloaded as a bundle, or deployed to an Apigee X environment.  
 
 ## Examples
 ### CLI
@@ -9,9 +9,16 @@ npm install -g apigee-template
 ```
 Use the CLI either in command or interactive mode.
 ```bash
-apigee-template -h #Show all commands
-apigee-template -f ./samples/input.json -d -e test1 -k ./key.json #Generate a proxy based on input.json and deploy it to environment test1
-apigee-template #Use the CLI in interactive to supply inputs
+#Show all commands
+apigee-template -h
+```
+```bash
+#Generate a proxy based on input.json and deploy it to environment test1
+apigee-template -f ./samples/input.json -d -e test1 -k ./key.json
+```
+```bash
+#Use the CLI in interactive to supply inputs
+apigee-template
 > Welcome to apigee-template, use -h for more command line options. 
 ? What should the proxy be called? MyProxy
 ? Which base path should be used? /test
