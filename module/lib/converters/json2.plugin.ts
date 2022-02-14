@@ -1,12 +1,30 @@
 import { ApigeeConverterPlugin, ApigeeTemplateInput, authTypes, proxyTypes } from "../interfaces";
 
+
+/**
+ * Converter from JSON format 2 to ApigeeTemplateInput
+ * @date 2/11/2022 - 10:34:37 AM
+ *
+ * @export
+ * @class Json2Converter
+ * @typedef {Json2Converter}
+ * @implements {ApigeeConverterPlugin}
+ */
 export class Json2Converter implements ApigeeConverterPlugin {
+
+  /**
+   * Converts input string in JSON format 2 to ApigeeTemplateInput
+   * @date 2/11/2022 - 10:35:02 AM
+   *
+   * @param {string} input Input string in JSON format 2
+   * @return {Promise<ApigeeTemplateInput>} ApigeeTemplateInput object or undefined if not possible
+   */
   convertInput(input: string): Promise<ApigeeTemplateInput> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       let result: ApigeeTemplateInput = undefined;
 
       try {
-        let obj = JSON.parse(input);
+        const obj = JSON.parse(input);
 
         if (obj.api) {
           try {

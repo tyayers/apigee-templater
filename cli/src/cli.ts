@@ -1,6 +1,5 @@
 import arg from 'arg';
 import fs from 'fs';
-import vm from 'vm';
 import { performance } from 'perf_hooks';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
@@ -9,9 +8,9 @@ import 'dotenv/config'
 import {
   ApigeeTemplateInput, ProxiesPlugin, TargetsPlugin, AuthSfPlugin,
   AuthApiKeyPlugin, QuotaPlugin, SpikeArrestPlugin, ApigeeTemplateService,
-  ApigeeGenerator, proxyTypes, authTypes, Json1Converter, Json2Converter, OpenApiV3Converter
+  ApigeeGenerator, Json1Converter, Json2Converter, OpenApiV3Converter
 } from 'apigee-templater-module'
-import { ApigeeService, ApiManagementInterface, ProxyRevision, ProxyDeployment } from 'apigee-x-module'
+import { ApigeeService, ApiManagementInterface, ProxyRevision } from 'apigee-x-module'
 
 
 /**
@@ -43,10 +42,10 @@ export default class cli {
    * Parses the user inputs
    * @date 1/31/2022 - 8:47:02 AM
    *
-   * @param {*} rawArgs
-   * @returns {{ file: any; input: any; deploy: any; environment: any; filter: any; name: any; basePath: any; targetUrl: any; verbose: any; keyPath: any; help: any; }}
+   * @param {cliArgs} rawArgs The command line arguments
+   * @return {cliArgs}} Processed arguments
    */
-  parseArgumentsIntoOptions(rawArgs) {
+  parseArgumentsIntoOptions(rawArgs: string[]): cliArgs {
     const args = arg(
       {
         '--file': String,
@@ -94,7 +93,7 @@ export default class cli {
   /**
    * Prompts the user for any missing inputs
    * @param {cliArgs} options The options collection of user inputs
-   * @returns {cliArgs} Updated cliArgs options collection
+   * @return {cliArgs} Updated cliArgs options collection
    */
    async promptForMissingOptions(options: cliArgs): Promise<cliArgs> {
     const questions = [];
@@ -104,7 +103,7 @@ export default class cli {
         name: 'name',
         message: 'What should the proxy be called?',
         default: 'MyProxy',
-        transformer: (input, answer) => {
+        transformer: (input) => {
           return input.replace(/ /g, "-");
         }
       });
@@ -115,7 +114,7 @@ export default class cli {
         type: 'input',
         name: 'basePath',
         message: 'Which base path should be used?',
-        transformer: (input, answer) => {
+        transformer: (input) => {
           return `/${input}`;
         }
       });
@@ -126,7 +125,7 @@ export default class cli {
         type: 'input',
         name: 'targetUrl',
         message: 'Which backend target should be called?',
-        transformer: (input, answer) => {
+        transformer: (input) => {
           return `https://${input}`;
         }
       });
@@ -161,11 +160,10 @@ export default class cli {
         },
         choices: (answers) => {
           if (answers.keyPath) process.env.GOOGLE_APPLICATION_CREDENTIALS = answers.keyPath;
-          let envs: string[] = [];
 
           this.apigeeService.getEnvironments().then((result) => {
             return result;
-          }).catch((error) => {
+          }).catch(() => {
             console.error(`${chalk.redBright("! Error:")} Invalid GCP service account key file passed, please pass a service account with Apigee deployment roles attached.`);
             return [];
           });
@@ -194,9 +192,8 @@ export default class cli {
   
   /**
    * Prints example and full commands
-   * @returns none
    **/
-  printHelp() {
+  printHelp() { 
     console.log("")
     console.log(`${chalk.bold(chalk.blueBright("Simple examples:"))}`);
     console.log(`apigee-template ${chalk.grey("# Start interactive mode to enter the parameters.")}`)
@@ -206,10 +203,9 @@ export default class cli {
 
     console.log("");
     console.log(`${chalk.bold(chalk.blueBright("All parameters:"))}`);
-    for (let line of helpCommands) {
+    for (const line of helpCommands) {
       console.log(`${chalk.bold(chalk.green(line.name))}: ${chalk.grey(line.description)} `)
     }
-    //console.log("");
   }
   
   /**
@@ -218,9 +214,8 @@ export default class cli {
    *
    * @async
    * @param {cliArgs} args The user input args to the process 
-   * @returns {*} none
    */
-  async process(args: cliArgs) {
+  async process(args: string[]) {
     let options: cliArgs = this.parseArgumentsIntoOptions(args);
     if (options.keyPath) process.env.GOOGLE_APPLICATION_CREDENTIALS = options.keyPath;
     if (options.verbose) this.logVerbose(JSON.stringify(options), "options:");
@@ -245,7 +240,7 @@ export default class cli {
         console.error(`${chalk.redBright("! Error:")} Invalid GCP service account key file passed, please pass a service account with Apigee deployment roles attached.`);
       }
 
-      let newInput: ApigeeTemplateInput = {
+      const newInput: ApigeeTemplateInput = {
         name: options.name,
         proxyEndpoints: [
           {
@@ -259,7 +254,7 @@ export default class cli {
       options.input = JSON.stringify(newInput);
     }
 
-    var _proxyDir = ".";
+    const _proxyDir = ".";
 
     if (options.filter) {
       // users can add their own preprocessing filter scripts here
@@ -278,14 +273,14 @@ export default class cli {
         console.error(`${chalk.redBright("! Error:")} No GCP credentials found, please set the GOOGLE_APPLICATION_CREDENTIALS environment variable or use the -k parameter, see https://cloud.google.com/docs/authentication/getting-started for more information.`);
       }
       else if (options.deploy) {
-        var startTime = performance.now();
+        const startTime = performance.now();
         this.apigeeService.updateProxy(result.template.name, _proxyDir + "/" + result.template.name + ".zip").then((updateResult: ProxyRevision) => {
           if (updateResult && updateResult.revision) {
-            this.apigeeService.deployProxyRevision(options.environment, result.template.name, updateResult.revision).then((deploymentResult) => {
-              var endTime = performance.now();
-              var duration = endTime - startTime;
+            this.apigeeService.deployProxyRevision(options.environment, result.template.name, updateResult.revision).then(() => {
+              const endTime = performance.now();
+              const duration = endTime - startTime;
               console.log(`${chalk.green(">")} Proxy ${chalk.bold(chalk.blue(result.template.name + " version " + updateResult.revision))} deployed to environment ${chalk.bold(chalk.magentaBright(options.environment))} in ${chalk.bold(chalk.green(Math.round(duration) + " milliseconds"))}.`);
-            }).catch((error) => {
+            }).catch(() => {
               console.error(`${chalk.redBright("! Error:")} Error deploying proxy revision.`);
             })
           }
@@ -296,7 +291,7 @@ export default class cli {
             console.error(`${chalk.redBright("! Error:")} Error deploying proxy revision.`);
         });
       }
-    }).catch((error) => {
+    }).catch(() => {
       console.error(`${chalk.redBright("! Error:")} Error templating proxy, invalid inputs given.`);
       process.exit();
     });
@@ -311,10 +306,8 @@ export default class cli {
    * @param {string} label An optional label as prefix label
    */
   logVerbose(input: string, label: string) {
-    //console.log("");
     if (label) console.log(`${chalk.grey("> " + label)}`)
     console.log(`${chalk.grey("> " + input)}`)
-    //console.log("");
   }
 }
 
@@ -327,17 +320,17 @@ export default class cli {
  * @typedef {cliArgs}
  */
 class cliArgs {
-  file: string = "";
-  input: string = "";
-  deploy: boolean = false;
-  environment: string = "";
-  filter: string = "";
-  name: string = "";
-  basePath: string = "";
-  targetUrl: string = "";
-  verbose: boolean = false;
-  keyPath: string = "";
-  help: boolean = false;
+  file = "";
+  input = "";
+  deploy = false;
+  environment = "";
+  filter = "";
+  name = "";
+  basePath = "";
+  targetUrl = "";
+  verbose = false;
+  keyPath = "";
+  help = false;
 }
 
 

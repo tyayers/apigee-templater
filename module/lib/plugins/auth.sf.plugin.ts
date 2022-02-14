@@ -1,10 +1,18 @@
-import fs from 'fs';
 import Handlebars from 'handlebars';
-import { ApigeeTemplatePlugin, ApigeeTemplateInput, proxyEndpoint, authTypes, PlugInResult } from "../interfaces";
+import { ApigeeTemplatePlugin, proxyEndpoint, authTypes, PlugInResult } from "../interfaces";
 
+/**
+ * Template plugin to evaluate a sharedflow for authn
+ * @date 2/14/2022 - 8:12:42 AM
+ *
+ * @export
+ * @class AuthSfPlugin
+ * @typedef {AuthSfPlugin}
+ * @implements {ApigeeTemplatePlugin}
+ */
 export class AuthSfPlugin implements ApigeeTemplatePlugin {
 
-  snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  snippet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <FlowCallout continueOnError="false" enabled="true" name="VerifyJWT">
       <DisplayName>VerifyJWT</DisplayName>
       <FaultRules/>
@@ -26,16 +34,24 @@ export class AuthSfPlugin implements ApigeeTemplatePlugin {
       <SharedFlowBundle>Shared-Flow_GCP_API</SharedFlowBundle>
   </FlowCallout>`;
 
-  template: any = Handlebars.compile(this.snippet);
+  template = Handlebars.compile(this.snippet);
 
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult> {
-    return new Promise((resolve, reject) => {
-      
-      let fileResult: PlugInResult = new PlugInResult();
+  /**
+   * Applies the plugin logic for templating
+   * @date 2/14/2022 - 8:13:23 AM
+   *
+   * @param {proxyEndpoint} inputConfig
+   * @param {Map<string, object>} processingVars
+   * @return {Promise<PlugInResult>}
+   */
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult> {
+    return new Promise((resolve) => {
+
+      const fileResult: PlugInResult = new PlugInResult();
 
       if (inputConfig.auth && inputConfig.auth.filter(e => e.type === authTypes.sharedflow).length > 0) {
-        
-        var authConfig = inputConfig.auth.filter(e => e.type === authTypes.sharedflow)[0];
+
+        const authConfig = inputConfig.auth.filter(e => e.type === authTypes.sharedflow)[0];
 
         fileResult.files = [
           {
@@ -49,7 +65,7 @@ export class AuthSfPlugin implements ApigeeTemplatePlugin {
           }
         ];
 
-        processingVars["preflow_request_policies"].push({name: "VerifyJWT"});
+        processingVars["preflow_request_policies"].push({ name: "VerifyJWT" });
       }
 
       resolve(fileResult);

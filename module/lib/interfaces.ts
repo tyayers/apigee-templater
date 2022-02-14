@@ -1,6 +1,5 @@
 export interface ApigeeTemplateInput {
   name: string;
-  proxyType?: proxyTypes;
   proxyEndpoints: proxyEndpoint[];
 }
 
@@ -16,7 +15,7 @@ export interface proxyEndpoint {
 
 export interface authConfig {
   type: authTypes;
-  parameters: {[key: string]: string};
+  parameters: { [key: string]: string };
 }
 
 export interface quotaConfig {
@@ -29,14 +28,12 @@ export interface spikeArrestConfig {
   rate: string;
 }
 
-export enum proxyTypes {
-  programmable = "programmable",
-  configurable = "configurable"
-}
-
 export enum authTypes {
+  // eslint-disable-next-line no-unused-vars
   apikey = "apikey",
+  // eslint-disable-next-line no-unused-vars
   jwt = "jwt",
+  // eslint-disable-next-line no-unused-vars
   sharedflow = "sharedflow"
 }
 
@@ -45,25 +42,49 @@ export interface ApigeeTemplateService {
   generateProxy(inputConfig: ApigeeTemplateInput, outputDir: string): Promise<GenerateResult>
 }
 
+/**
+ * Result of the template generation
+ * @date 2/14/2022 - 8:04:45 AM
+ *
+ * @export
+ * @class GenerateResult
+ * @typedef {GenerateResult}
+ */
 export class GenerateResult {
-  success: boolean = false;
-  duration: number = 0;
-  message: string = "";
-  localPath: string = "";
+  success = false;
+  duration = 0;
+  message = "";
+  localPath = "";
   template?: ApigeeTemplateInput;
 }
 
+/**
+ * Result of plugin processing
+ * @date 2/14/2022 - 8:05:47 AM
+ *
+ * @export
+ * @class PlugInResult
+ * @typedef {PlugInResult}
+ */
 export class PlugInResult {
   files: PlugInFile[] = [];
 }
 
+/**
+ * A file definition that should be created from a plugin
+ * @date 2/14/2022 - 8:06:01 AM
+ *
+ * @export
+ * @class PlugInFile
+ * @typedef {PlugInFile}
+ */
 export class PlugInFile {
-  path: string = "";
-  contents: string = "";
+  path = "";
+  contents = "";
 }
 
 export interface ApigeeTemplatePlugin {
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult>
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult>
 }
 
 export interface ApigeeConverterPlugin {

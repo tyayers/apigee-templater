@@ -1,10 +1,18 @@
-import fs from 'fs';
 import Handlebars from 'handlebars';
 import { ApigeeTemplatePlugin, PlugInResult, proxyEndpoint } from "../interfaces";
 
+/**
+ * Creates proxy endpoints for the template
+ * @date 2/14/2022 - 8:14:22 AM
+ *
+ * @export
+ * @class ProxiesPlugin
+ * @typedef {ProxiesPlugin}
+ * @implements {ApigeeTemplatePlugin}
+ */
 export class ProxiesPlugin implements ApigeeTemplatePlugin {
 
-  snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  snippet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <ProxyEndpoint name="default">
       <PreFlow name="PreFlow">
           <Request>
@@ -29,22 +37,30 @@ export class ProxiesPlugin implements ApigeeTemplatePlugin {
       </RouteRule>
   </ProxyEndpoint>`;
 
-  template: any = Handlebars.compile(this.snippet);
+  template = Handlebars.compile(this.snippet);
 
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult> {
-    return new Promise((resolve, reject) => {
-      let fileResult: PlugInResult = new PlugInResult();
+  /**
+   * Apply template for proxy endpoints
+   * @date 2/14/2022 - 8:15:04 AM
+   *
+   * @param {proxyEndpoint} inputConfig
+   * @param {Map<string, object>} processingVars
+   * @return {Promise<PlugInResult>}
+   */
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult> {
+    return new Promise((resolve) => {
+      const fileResult: PlugInResult = new PlugInResult();
       fileResult.files = [
         {
           path: "/proxies/" + inputConfig.name + ".xml",
           contents: this.template(
             {
-              basePath: inputConfig.basePath, 
-              targetName: inputConfig.targetName, 
+              basePath: inputConfig.basePath,
+              targetName: inputConfig.targetName,
               preflow_request_policies: processingVars["preflow_request_policies"],
               preflow_response_policies: processingVars["preflow_response_policies"],
               postflow_request_policies: processingVars["postflow_request_policies"],
-              postflow_response_policies: processingVars["postflow_response_policies"],          
+              postflow_response_policies: processingVars["postflow_response_policies"],
             })
         }
       ];

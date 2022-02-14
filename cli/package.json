@@ -26,7 +26,7 @@
   "license": "ISC",
   "dependencies": {
     "apigee-templater-module": "^0.4.19",
-    "apigee-x-module": "^0.5.15",
+    "apigee-x-module": "^0.7.0",
     "arg": "^5.0.1",
     "chalk": "^4.1.2",
     "dotenv": "^14.3.2",
@@ -34,7 +34,7 @@
     "inquirer": "^8.2.0"
   },
   "devDependencies": {
-    "ts-node": "^10.4.0",
+    "ts-node": "^10.5.0",
     "tslint": "^6.1.3",
     "typescript": "^4.5.5"
   }

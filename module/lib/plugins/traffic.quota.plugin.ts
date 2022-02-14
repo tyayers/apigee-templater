@@ -1,10 +1,18 @@
-import fs from 'fs';
 import Handlebars from 'handlebars';
-import { ApigeeTemplatePlugin, ApigeeTemplateInput, proxyEndpoint, authTypes, quotaConfig, PlugInResult } from "../interfaces";
+import { ApigeeTemplatePlugin, proxyEndpoint, PlugInResult } from "../interfaces";
 
+/**
+ * Plugin for traffic quota templating
+ * @date 2/14/2022 - 8:17:36 AM
+ *
+ * @export
+ * @class QuotaPlugin
+ * @typedef {QuotaPlugin}
+ * @implements {ApigeeTemplatePlugin}
+ */
 export class QuotaPlugin implements ApigeeTemplatePlugin {
 
-  snippet: string = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  snippet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Quota continueOnError="false" enabled="true" name="Quota-{{index}}" type="calendar">
       <DisplayName>Quota-{{index}}</DisplayName>
       <Properties/>
@@ -20,26 +28,36 @@ export class QuotaPlugin implements ApigeeTemplatePlugin {
       </AsynchronousConfiguration>
   </Quota>`;
 
-  template: any = Handlebars.compile(this.snippet);
+  template = Handlebars.compile(this.snippet);
 
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, any>): Promise<PlugInResult> {
-    return new Promise((resolve, reject) => {
-      let fileResult: PlugInResult = new PlugInResult();
+  /**
+   * Applies the template logic for traffic quotas
+   * @date 2/14/2022 - 8:18:32 AM
+   *
+   * @param {proxyEndpoint} inputConfig
+   * @param {Map<string, any>} processingVars
+   * @return {Promise<PlugInResult>}
+   */
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult> {
+    return new Promise((resolve) => {
+      const fileResult: PlugInResult = new PlugInResult();
 
       if (inputConfig.quotas && inputConfig.quotas.length > 0) {
 
         fileResult.files = [];
-        for (var i in inputConfig.quotas) {
-          fileResult.files.push({
-            path: "/policies/Quota-" + (Number(i) + 1).toString() + ".xml",
-            contents: this.template({
-              index: (Number(i) + 1),
-              count: inputConfig.quotas[i].count,
-              timeUnit: inputConfig.quotas[i].timeUnit
-            })
-          });
+        for (const i in inputConfig.quotas) {
+          if (inputConfig.quotas[i].count > 0) {
+            fileResult.files.push({
+              path: "/policies/Quota-" + (Number(i) + 1).toString() + ".xml",
+              contents: this.template({
+                index: (Number(i) + 1),
+                count: inputConfig.quotas[i].count,
+                timeUnit: inputConfig.quotas[i].timeUnit
+              })
+            });
 
-          processingVars["preflow_request_policies"].push({name: "Quota-" + (Number(i) + 1).toString()});
+            processingVars["preflow_request_policies"].push({ name: "Quota-" + (Number(i) + 1).toString() });
+          }
         }
       }
 

@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan'
 
-import { ApigeeService, ApiManagementInterface, ProxyRevision, ProxyDeployment} from 'apigee-x-module'
+import { ApigeeService, ApiManagementInterface, ProxyRevision } from 'apigee-x-module'
 import { ApigeeGenService, ApigeeGenerator, ApigeeTemplateInput, proxyTypes, authTypes } from 'apigee-templater-module';
 import { ProxiesPlugin } from "apigee-templater-module";
 import { TargetsPlugin } from "apigee-templater-module";
@@ -32,9 +32,9 @@ app.use(express.static('public'));
 // special JSON conversion middleware
 app.use((req, res, next) => {
   if (req.body && req.body.api) {
-    var input = req.body;
+    const input = req.body;
     try {
-      var newInput: ApigeeTemplateInput = {
+      const newInput: ApigeeTemplateInput = {
         name: input.product.apiTestBackendProduct.productName,
         proxyType: proxyTypes.programmable,
         proxyEndpoints: [
@@ -62,7 +62,7 @@ app.use((req, res, next) => {
 
       if (input.environments && input.environments.length > 0 && input.environments[0].backendAudienceConfiguration) {
         newInput.proxyEndpoints[0].auth[0].parameters["audience"] = input.environments[0].backendAudienceConfiguration.backendAudience;
-      }      
+      }
       if (input.api.policies && input.api.policies.inbound && input.api.policies.inbound.validateJwtTokenAzureAdV1) {
         newInput.proxyEndpoints[0].auth[0].parameters["issuerVer1"] = "https://sts.windows.net/30f52344-4663-4c2e-bab3-61bf24ebbed8/";
       }
@@ -72,7 +72,7 @@ app.use((req, res, next) => {
 
       req.body = newInput;
     }
-    catch(error) {
+    catch (error) {
       console.log(error);
     }
   }
@@ -82,7 +82,7 @@ app.use((req, res, next) => {
 
 app.post('/apigeegen/deployment/:environment', (req, res) => {
   console.log(JSON.stringify(req.body));
-  var env: string = req.params.environment;
+  const env: string = req.params.environment;
 
   if (!env) {
     res.status(400).send(JSON.stringify({
@@ -92,22 +92,22 @@ app.post('/apigeegen/deployment/:environment', (req, res) => {
     return;
   }
 
-  let genInput: ApigeeTemplateInput = req.body as ApigeeTemplateInput;
-  var _proxyDir = "./proxies";
+  const genInput: ApigeeTemplateInput = req.body as ApigeeTemplateInput;
+  const _proxyDir = "./proxies";
 
   fs.mkdirSync(_proxyDir, { recursive: true });
 
-  apigeeGenerator.generateProxy(genInput, _proxyDir).then((result) => {
+  apigeeGenerator.generateProxy(genInput, _proxyDir).then(() => {
 
     apigeeService.updateProxy(genInput.name, _proxyDir + "/" + genInput.name + ".zip").then((updateResult: ProxyRevision) => {
       if (updateResult && updateResult.revision) {
-        apigeeService.deployProxyRevision(env, genInput.name, updateResult.revision).then((deploymentResult) => {
+        apigeeService.deployProxyRevision(env, genInput.name, updateResult.revision).then(() => {
           console.log("deploy complete!");
           fs.unlinkSync(_proxyDir + "/" + genInput.name + ".zip");
           res.status(200).send({
             message: `Deployment successful of proxy ${genInput.name} to environment ${env}.`
           });
-        }).catch((error) => {
+        }).catch(() => {
           if (fs.existsSync(_proxyDir + "/" + genInput.name + ".zip"))
             fs.unlinkSync(_proxyDir + "/" + genInput.name + ".zip");
           res.status(500).send({
@@ -128,7 +128,7 @@ app.post('/apigeegen/deployment/:environment', (req, res) => {
           message: `Error deploying ${genInput.name}, general error.`
         });
     });
-  }).catch((error) => {
+  }).catch(() => {
     if (fs.existsSync(_proxyDir + "/" + genInput.name + ".zip"))
       fs.unlinkSync(_proxyDir + "/" + genInput.name + ".zip");
 
@@ -141,15 +141,15 @@ app.post('/apigeegen/deployment/:environment', (req, res) => {
 app.post('/apigeegen/file', (req, res) => {
   console.log(JSON.stringify(req.body));
 
-  let genInput: ApigeeTemplateInput = req.body as ApigeeTemplateInput;
-  var _proxyDir = "./proxies";
+  const genInput: ApigeeTemplateInput = req.body as ApigeeTemplateInput;
+  const _proxyDir = "./proxies";
 
   fs.mkdirSync(_proxyDir, { recursive: true });
 
-  apigeeGenerator.generateProxy(genInput, _proxyDir).then((result) => {
+  apigeeGenerator.generateProxy(genInput, _proxyDir).then(() => {
     res.attachment(genInput.name + '.zip').type('zip');
     // Create a readable stream that we can pipe to the response object
-    let readStream = fs.createReadStream(_proxyDir + "/" + genInput.name + ".zip");
+    const readStream = fs.createReadStream(_proxyDir + "/" + genInput.name + ".zip");
     // When everything has been read from the stream, end the response
     readStream.on('close', () => {
       // delete file and return
@@ -158,7 +158,7 @@ app.post('/apigeegen/file', (req, res) => {
     });
     // Pipe the contents of the readStream directly to the response
     readStream.pipe(res);
-  }).catch((error) => {
+  }).catch(() => {
     if (fs.existsSync(_proxyDir + "/" + genInput.name + ".zip"))
       fs.unlinkSync(_proxyDir + "/" + genInput.name + ".zip");
 

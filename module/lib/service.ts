@@ -11,8 +11,16 @@ import { SpikeArrestPlugin } from "./plugins/traffic.spikearrest.plugin";
 import { Json1Converter } from "./converters/json1.plugin";
 import { Json2Converter } from "./converters/json2.plugin";
 import { OpenApiV3Converter } from "./converters/openapiv3.yaml.plugin";
-import { start } from 'repl';
 
+/**
+ * ApigeeGenerator runs the complete templating operation with all injected plugins
+ * @date 2/14/2022 - 8:22:47 AM
+ *
+ * @export
+ * @class ApigeeGenerator
+ * @typedef {ApigeeGenerator}
+ * @implements {ApigeeTemplateService}
+ */
 export class ApigeeGenerator implements ApigeeTemplateService {
 
   // Default Plugins
@@ -30,6 +38,14 @@ export class ApigeeGenerator implements ApigeeTemplateService {
     new OpenApiV3Converter()
   ];
 
+  /**
+   * Creates an instance of ApigeeGenerator.
+   * @date 2/14/2022 - 8:23:53 AM
+   *
+   * @constructor
+   * @param {ApigeeTemplatePlugin[]} plugins
+   * @param {ApigeeConverterPlugin[]} converterPlugins
+   */
   constructor(plugins: ApigeeTemplatePlugin[], converterPlugins: ApigeeConverterPlugin[]) {
     if (plugins && plugins.length > 0)
       this.plugins = plugins;
@@ -38,16 +54,23 @@ export class ApigeeGenerator implements ApigeeTemplateService {
       this.converterPlugins = converterPlugins;
   }
 
+  /**
+   * Converts an input string into a template input object
+   * @date 2/14/2022 - 8:24:03 AM
+   *
+   * @param {string} inputString
+   * @return {Promise<ApigeeTemplateInput>}
+   */
   convertStringToTemplate(inputString: string): Promise<ApigeeTemplateInput> {
     return new Promise((resolve, reject) => {
       let result: ApigeeTemplateInput = undefined;
-      let conversions: Promise<ApigeeTemplateInput>[] = [];
-      for (let plugin of this.converterPlugins) {
+      const conversions: Promise<ApigeeTemplateInput>[] = [];
+      for (const plugin of this.converterPlugins) {
         conversions.push(plugin.convertInput(inputString));
       }
 
       Promise.all(conversions).then((values) => {
-        for(let value of values) {
+        for (const value of values) {
           if (value) {
             result = value;
             break;
@@ -57,11 +80,19 @@ export class ApigeeGenerator implements ApigeeTemplateService {
         if (result)
           resolve(result);
         else
-          reject("Input string could not be converted to a valid template.")
+          reject(new Error("Input string could not be converted to a valid template."))
       });
     });
   }
 
+  /**
+   * Generates a proxy bundle based on an input string
+   * @date 2/14/2022 - 8:25:31 AM
+   *
+   * @param {string} inputString
+   * @param {string} outputDir
+   * @return {Promise<GenerateResult>} Result including path to generated proxy bundle
+   */
   generateProxyFromString(inputString: string, outputDir: string): Promise<GenerateResult> {
     return new Promise((resolve, reject) => {
       this.convertStringToTemplate(inputString).then((result) => {
@@ -75,19 +106,27 @@ export class ApigeeGenerator implements ApigeeTemplateService {
     });
   }
 
+  /**
+   * Main generate proxy method with correct input object
+   * @date 2/14/2022 - 8:26:00 AM
+   *
+   * @param {ApigeeTemplateInput} genInput
+   * @param {string} outputDir
+   * @return {Promise<GenerateResult>} GenerateResult object including path to generated proxy bundle
+   */
   generateProxy(genInput: ApigeeTemplateInput, outputDir: string): Promise<GenerateResult> {
     return new Promise((resolve, reject) => {
-      var startTime = performance.now();
+      const startTime = performance.now();
 
-      let result: GenerateResult = {
+      const result: GenerateResult = {
         success: true,
         duration: 0,
         message: "",
         localPath: ""
       }
 
-      let processingVars: Map<string, any> = new Map<string, any>();
-      let newOutputDir = outputDir + "/" + genInput.name + "/apiproxy";
+      const processingVars: Map<string, object> = new Map<string, object>();
+      const newOutputDir = outputDir + "/" + genInput.name + "/apiproxy";
       fs.mkdirSync(newOutputDir, { recursive: true });
 
       fs.mkdirSync(newOutputDir + "/proxies", { recursive: true });
@@ -95,14 +134,14 @@ export class ApigeeGenerator implements ApigeeTemplateService {
       fs.mkdirSync(newOutputDir + "/policies", { recursive: true });
       fs.mkdirSync(newOutputDir + "/resources", { recursive: true });
 
-      for (let endpoint of genInput.proxyEndpoints) {
+      for (const endpoint of genInput.proxyEndpoints) {
         // Initialize variables for endpoint
         processingVars["preflow_request_policies"] = [];
         processingVars["preflow_response_policies"] = [];
         processingVars["postflow_request_policies"] = [];
         processingVars["postflow_response_policies"] = [];
 
-        for (let plugin of this.plugins) {
+        for (const plugin of this.plugins) {
           plugin.applyTemplate(endpoint, processingVars).then((result: PlugInResult) => {
             result.files.forEach((file: PlugInFile) => {
               fs.writeFileSync(newOutputDir + file.path, file.contents);
@@ -110,20 +149,20 @@ export class ApigeeGenerator implements ApigeeTemplateService {
           });
         }
       }
-    
-      var archive = archiver('zip');
-      archive.on('error', function(err) {
+
+      const archive = archiver('zip');
+      archive.on('error', function (err) {
         reject(err);
       });
-    
+
       archive.directory(outputDir + "/" + genInput.name, false);
-    
-      var output = fs.createWriteStream(outputDir + "/" + genInput.name + ".zip");
-    
+
+      const output = fs.createWriteStream(outputDir + "/" + genInput.name + ".zip");
+
       archive.on('end', () => {
         // Zip is finished, cleanup files
-        fs.rmdirSync(outputDir + "/" + genInput.name, {recursive: true});
-        var endTime = performance.now();
+        fs.rmdirSync(outputDir + "/" + genInput.name, { recursive: true });
+        const endTime = performance.now();
         result.duration = endTime - startTime;
         result.message = `Proxy generation completed in ${Math.round(result.duration)} milliseconds.`
         result.localPath = outputDir + "/" + genInput.name + ".zip";
@@ -131,7 +170,7 @@ export class ApigeeGenerator implements ApigeeTemplateService {
 
         resolve(result);
       });
-    
+
       archive.pipe(output);
       archive.finalize();
     });
