@@ -1,7 +1,7 @@
 import archiver from 'archiver';
 import fs from 'fs';
 import { performance } from 'perf_hooks';
-import { ApigeeTemplateService, ApigeeTemplatePlugin, ApigeeTemplateInput, PlugInResult, PlugInFile, ApigeeConverterPlugin, GenerateResult } from "./interfaces";
+import { ApigeeTemplateService, ApigeeTemplateInput, ApigeeTemplateProfile, PlugInResult, PlugInFile, ApigeeConverterPlugin, GenerateResult } from "./interfaces";
 import { ProxiesPlugin } from "./plugins/proxies.plugin";
 import { TargetsPlugin } from "./plugins/targets.plugin";
 import { AuthSfPlugin } from "./plugins/auth.sf.plugin";
@@ -23,35 +23,45 @@ import { OpenApiV3Converter } from "./converters/openapiv3.yaml.plugin";
  */
 export class ApigeeGenerator implements ApigeeTemplateService {
 
-  // Default Plugins
-  plugins: ApigeeTemplatePlugin[] = [
-    new SpikeArrestPlugin(),
-    new AuthApiKeyPlugin(),
-    new AuthSfPlugin(),
-    new QuotaPlugin(),
-    new TargetsPlugin(),
-    new ProxiesPlugin(),
-  ];
   converterPlugins: ApigeeConverterPlugin[] = [
     new Json1Converter(),
     new Json2Converter(),
     new OpenApiV3Converter()
   ];
 
+  profiles: Record<string, ApigeeTemplateProfile> = {
+    "default": {
+      plugins: [
+        new SpikeArrestPlugin(),
+        new AuthApiKeyPlugin(),
+        new AuthSfPlugin(),
+        new QuotaPlugin(),
+        new TargetsPlugin(),
+        new ProxiesPlugin(),
+      ]
+    }
+  };
+
+  // eslint-disable-next-line valid-jsdoc
   /**
    * Creates an instance of ApigeeGenerator.
-   * @date 2/14/2022 - 8:23:53 AM
+   * @date 3/16/2022 - 9:09:47 AM
    *
    * @constructor
-   * @param {ApigeeTemplatePlugin[]} plugins
-   * @param {ApigeeConverterPlugin[]} converterPlugins
+   * @param {?Record<string, ApigeeTemplateProfile>} [customProfiles]
+   * @param {?ApigeeConverterPlugin[]} [customInputConverters]
    */
-  constructor(plugins: ApigeeTemplatePlugin[], converterPlugins: ApigeeConverterPlugin[]) {
-    if (plugins && plugins.length > 0)
-      this.plugins = plugins;
-
-    if (converterPlugins && converterPlugins.length > 0)
-      this.converterPlugins = converterPlugins;
+  constructor(customProfiles?: Record<string, ApigeeTemplateProfile>, customInputConverters?: ApigeeConverterPlugin[]) {
+    // Override any profiles passed optionally in constructor
+    if (customProfiles) {
+      for (const [key, value] of Object.entries(customProfiles)) {
+        this.profiles[key] = value;
+      }
+    }
+    // Replace input converters if any passed in contructor
+    if (customInputConverters) {
+      this.converterPlugins = customInputConverters;
+    }
   }
 
   /**
@@ -63,25 +73,25 @@ export class ApigeeGenerator implements ApigeeTemplateService {
    */
   convertStringToTemplate(inputString: string): Promise<ApigeeTemplateInput> {
     return new Promise((resolve, reject) => {
-      let result: ApigeeTemplateInput = undefined;
       const conversions: Promise<ApigeeTemplateInput>[] = [];
       for (const plugin of this.converterPlugins) {
         conversions.push(plugin.convertInput(inputString));
       }
 
-      Promise.all(conversions).then((values) => {
+      Promise.allSettled(conversions).then((values) => {
+        let conversionSuccessful = false;
+
         for (const value of values) {
-          if (value) {
-            result = value;
+          if (value.status == 'fulfilled') {
+            conversionSuccessful = true;
+            resolve(value.value);
             break;
           }
         }
-      }).finally(() => {
-        if (result)
-          resolve(result);
-        else
-          reject(new Error("Input string could not be converted to a valid template."))
-      });
+
+        if (!conversionSuccessful)
+          reject(new Error("No conversion was found for the input string!"))
+      })
     });
   }
 
@@ -136,22 +146,27 @@ export class ApigeeGenerator implements ApigeeTemplateService {
 
       for (const endpoint of genInput.proxyEndpoints) {
         // Initialize variables for endpoint
-        processingVars["preflow_request_policies"] = [];
-        processingVars["preflow_response_policies"] = [];
-        processingVars["postflow_request_policies"] = [];
-        processingVars["postflow_response_policies"] = [];
+        processingVars.set("preflow_request_policies", []);
+        processingVars.set("preflow_response_policies", []);
+        processingVars.set("postflow_request_policies", []);
+        processingVars.set("postflow_response_policies", []);
 
-        for (const plugin of this.plugins) {
-          plugin.applyTemplate(endpoint, processingVars).then((result: PlugInResult) => {
-            result.files.forEach((file: PlugInFile) => {
-              fs.writeFileSync(newOutputDir + file.path, file.contents);
+        if (Object.keys(this.profiles).includes(genInput.profile)) {
+          for (const plugin of this.profiles[genInput.profile].plugins) {
+            plugin.applyTemplate(endpoint, processingVars).then((result: PlugInResult) => {
+              result.files.forEach((file: PlugInFile) => {
+                fs.writeFileSync(newOutputDir + file.path, file.contents);
+              });
             });
-          });
+          }
+        }
+        else {
+          reject(new Error(`Profile ${genInput.profile} was not found!  No conversion is possible without a valid profile (current profiles available: ${Object.keys(this.profiles)})`))
         }
       }
 
       const archive = archiver('zip');
-      archive.on('error', function (err) {
+      archive.on('error', function (err: Error) {
         reject(err);
       });
 
@@ -161,7 +176,7 @@ export class ApigeeGenerator implements ApigeeTemplateService {
 
       archive.on('end', () => {
         // Zip is finished, cleanup files
-        fs.rmdirSync(outputDir + "/" + genInput.name, { recursive: true });
+        fs.rmSync(outputDir + "/" + genInput.name, { recursive: true });
         const endTime = performance.now();
         result.duration = endTime - startTime;
         result.message = `Proxy generation completed in ${Math.round(result.duration)} milliseconds.`

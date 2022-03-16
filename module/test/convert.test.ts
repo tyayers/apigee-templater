@@ -3,7 +3,7 @@ import fs from 'fs';
 import { expect } from "chai";
 
 console.log("starting")
-const apigeeGenerator: ApigeeTemplateService = new ApigeeGenerator(undefined, undefined);
+const apigeeGenerator: ApigeeTemplateService = new ApigeeGenerator();
 
 describe('Generate simple normal JSON 1 proxy', () => {
   return it('should produce a valid proxy bundle', () => {

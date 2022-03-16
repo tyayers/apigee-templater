@@ -20,19 +20,22 @@ export class Json1Converter implements ApigeeConverterPlugin {
    * @return {Promise<ApigeeTemplateInput>} ApigeeTemplateInput object or undefined if wrong input format
    */
   convertInput(input: string): Promise<ApigeeTemplateInput> {
-    return new Promise((resolve) => {
-      let result: ApigeeTemplateInput = undefined;
+    return new Promise((resolve, reject) => {
+      let result: ApigeeTemplateInput;
 
       try {
         const inputData = JSON.parse(input);
-        if (inputData.name && inputData.proxyEndpoints)
+        if (inputData.name && inputData.proxyEndpoints) {
           result = inputData as ApigeeTemplateInput;
+          resolve(result);
+        }
+        else
+          reject(new Error("Conversion not posible, data incomplete"));
       }
       catch(error) {
-        console.error(error);
+        // Conversion failed..
+        reject(new Error("Conversion failed"));
       }
-
-      resolve(result);
     });
   }
 }

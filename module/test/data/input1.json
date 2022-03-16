@@ -1,5 +1,6 @@
 {
   "name": "testproxy",
+  "profile": "default",
   "proxyEndpoints": [
     {
       "name": "default",

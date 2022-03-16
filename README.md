@@ -9,14 +9,6 @@ npm install -g apigee-template
 ```
 Use the CLI either in command or interactive mode.
 ```bash
-#Show all commands
-apigee-template -h
-```
-```bash
-#Generate a proxy based on input.json and deploy it to environment test1
-apigee-template -f ./samples/input.json -d -e test1 -k ./key.json
-```
-```bash
 #Use the CLI in interactive to supply inputs
 apigee-template
 > Welcome to apigee-template, use -h for more command line options. 
@@ -25,6 +17,14 @@ apigee-template
 ? Which backend target should be called? https://test.com
 ? Do you want to deploy the proxy to an Apigee X environment? No
 > Proxy MyProxy generated to ./MyProxy.zip in 60 milliseconds.
+```
+```bash
+#Show all commands
+apigee-template -h
+```
+```bash
+#Generate a proxy based on input.json and deploy it to environment test1 with credentials in key.json
+apigee-template -f ./samples/input.json -d -e test1 -k ./key.json
 ```
 ### REST API
 You can run the REST API service locally or deploy to any container runtime environment like [Cloud Run](https://cloud.google.com/run) (default deployment requires unauthenticated access).  

@@ -20,15 +20,13 @@ export class OpenApiV3Converter implements ApigeeConverterPlugin {
    * @return {Promise<ApigeeTemplateInput>} ApigeeTemplateInput object (or undefined if not possible to convert)
    */
   convertInput(input: string): Promise<ApigeeTemplateInput> {
-    return new Promise((resolve) => {
-      let result: ApigeeTemplateInput = undefined;
-
+    return new Promise((resolve, reject) => {
       try {
-        const specObj = yaml.load(input);
+        const specObj: any = yaml.load(input);
 
         if (specObj && specObj.servers && specObj.servers.length > 0) {
 
-          result = {
+          const result = new ApigeeTemplateInput({
             name: specObj.info.title.replace(" ", "-"),
             proxyEndpoints: [
               {
@@ -38,14 +36,17 @@ export class OpenApiV3Converter implements ApigeeConverterPlugin {
                 targetUrl: specObj.servers[0].url.replace("http://", "").replace("https://", "")
               }
             ]
-          };
+          });
+
+          resolve(result);
+        }
+        else {
+          reject(new Error("Conversion not possible"));
         }
       }
       catch (error) {
-        console.error(error);
+        reject(error);
       }
-
-      resolve(result);
     });
   }
 }

@@ -4,22 +4,9 @@ import cors from 'cors';
 import morgan from 'morgan'
 
 import { ApigeeService, ApiManagementInterface, ProxyRevision } from 'apigee-x-module'
-import { ApigeeGenService, ApigeeGenerator, ApigeeTemplateInput, proxyTypes, authTypes } from 'apigee-templater-module';
-import { ProxiesPlugin } from "apigee-templater-module";
-import { TargetsPlugin } from "apigee-templater-module";
-import { AuthSfPlugin } from "apigee-templater-module";
-import { AuthApiKeyPlugin } from "apigee-templater-module";
-import { QuotaPlugin } from "apigee-templater-module";
-import { SpikeArrestPlugin } from "apigee-templater-module";
+import { ApigeeTemplateService, ApigeeGenerator, ApigeeTemplateInput, authTypes } from 'apigee-templater-module';
 
-const apigeeGenerator: ApigeeGenService = new ApigeeGenerator([
-  new SpikeArrestPlugin(),
-  new AuthApiKeyPlugin(),
-  new AuthSfPlugin(),
-  new QuotaPlugin(),
-  new TargetsPlugin(),
-  new ProxiesPlugin(),
-]);
+const apigeeGenerator: ApigeeTemplateService = new ApigeeGenerator();
 const apigeeService: ApiManagementInterface = new ApigeeService();
 
 const app = express();
@@ -34,9 +21,8 @@ app.use((req, res, next) => {
   if (req.body && req.body.api) {
     const input = req.body;
     try {
-      const newInput: ApigeeTemplateInput = {
+      const newInput: ApigeeTemplateInput = new ApigeeTemplateInput({
         name: input.product.apiTestBackendProduct.productName,
-        proxyType: proxyTypes.programmable,
         proxyEndpoints: [
           {
             name: "default",
@@ -51,7 +37,7 @@ app.use((req, res, next) => {
             ]
           }
         ]
-      };
+      });
 
       if (input.api.policies && input.api.policies.inbound && input.api.policies.inbound.totalThrottlingEnabled) {
         newInput.proxyEndpoints[0].quotas = [{

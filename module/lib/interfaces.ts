@@ -1,31 +1,50 @@
-export interface ApigeeTemplateInput {
-  name: string;
-  proxyEndpoints: proxyEndpoint[];
+
+/** Describes a proxy to be templated */
+export class ApigeeTemplateInput {
+  name = "MyProxy";
+  profile = "default";
+  proxyEndpoints: proxyEndpoint[] = [];
+
+  /**
+   * Creates an instance of ApigeeTemplateInput.
+   * @date 3/16/2022 - 10:18:44 AM
+   *
+   * @constructor
+   * @public
+   * @param {?Partial<ApigeeTemplateInput>} [init]
+   */
+  public constructor(init?:Partial<ApigeeTemplateInput>) {
+    Object.assign(this, init);
+  }
 }
 
-export interface proxyEndpoint {
-  name: string;
-  basePath: string;
+/** A proxy endpoint describes a basepath, targets and other proxy features */
+export class proxyEndpoint {
+  name = "";
+  basePath = "";
   targetName?: string;
-  targetUrl: string;
+  targetUrl = "";
   auth?: authConfig[];
   quotas?: quotaConfig[];
   spikeArrest?: spikeArrestConfig;
 }
 
-export interface authConfig {
-  type: authTypes;
-  parameters: { [key: string]: string };
+/** Authorization config for an endpoint */
+export class authConfig {
+  type: authTypes = authTypes.apikey;
+  parameters: { [key: string]: string } = {};
 }
 
-export interface quotaConfig {
-  count: number;
-  timeUnit: string;
+/** Quota config for an endpoint */
+export class quotaConfig {
+  count = 5;
+  timeUnit = "minute";
   condition?: string;
 }
 
-export interface spikeArrestConfig {
-  rate: string;
+/** Spike arrest config for an endpoint */
+export class spikeArrestConfig {
+  rate = "30s";
 }
 
 export enum authTypes {
@@ -42,14 +61,7 @@ export interface ApigeeTemplateService {
   generateProxy(inputConfig: ApigeeTemplateInput, outputDir: string): Promise<GenerateResult>
 }
 
-/**
- * Result of the template generation
- * @date 2/14/2022 - 8:04:45 AM
- *
- * @export
- * @class GenerateResult
- * @typedef {GenerateResult}
- */
+/** The result of the template generation */
 export class GenerateResult {
   success = false;
   duration = 0;
@@ -58,29 +70,20 @@ export class GenerateResult {
   template?: ApigeeTemplateInput;
 }
 
-/**
- * Result of plugin processing
- * @date 2/14/2022 - 8:05:47 AM
- *
- * @export
- * @class PlugInResult
- * @typedef {PlugInResult}
- */
+/** The result of plugin processing */
 export class PlugInResult {
   files: PlugInFile[] = [];
 }
 
-/**
- * A file definition that should be created from a plugin
- * @date 2/14/2022 - 8:06:01 AM
- *
- * @export
- * @class PlugInFile
- * @typedef {PlugInFile}
- */
+/** Plugin file results to be written to disk */
 export class PlugInFile {
   path = "";
   contents = "";
+}
+
+/** Profile definition with plugins to be used for conversion */
+export class ApigeeTemplateProfile {
+  plugins: ApigeeTemplatePlugin[] = [];
 }
 
 export interface ApigeeTemplatePlugin {

@@ -46,7 +46,9 @@ export class SpikeArrestPlugin implements ApigeeTemplatePlugin {
           }
         ];
 
-        processingVars["preflow_request_policies"].push({ name: "Spike-Arrest-1" });
+        // TODO: refactor to get rid of ugly Map string object here
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        (processingVars.get("preflow_request_policies") as Object[]).push({ name: "Spike-Arrest-1" });
       }
 
       resolve(fileResult);

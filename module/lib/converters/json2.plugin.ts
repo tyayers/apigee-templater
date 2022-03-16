@@ -1,4 +1,4 @@
-import { ApigeeConverterPlugin, ApigeeTemplateInput, authTypes, proxyTypes } from "../interfaces";
+import { ApigeeConverterPlugin, ApigeeTemplateInput, authTypes } from "../interfaces";
 
 
 /**
@@ -20,17 +20,14 @@ export class Json2Converter implements ApigeeConverterPlugin {
    * @return {Promise<ApigeeTemplateInput>} ApigeeTemplateInput object or undefined if not possible
    */
   convertInput(input: string): Promise<ApigeeTemplateInput> {
-    return new Promise((resolve) => {
-      let result: ApigeeTemplateInput = undefined;
-
+    return new Promise((resolve, reject) => {
       try {
         const obj = JSON.parse(input);
 
         if (obj.api) {
           try {
-            result = {
+            const result = new ApigeeTemplateInput({
               name: obj.product.apiTestBackendProduct.productName,
-              proxyType: proxyTypes.programmable,
               proxyEndpoints: [
                 {
                   name: "default",
@@ -45,7 +42,7 @@ export class Json2Converter implements ApigeeConverterPlugin {
                   ]
                 }
               ]
-            };
+            });
       
             if (obj.api.policies && obj.api.policies.inbound && obj.api.policies.inbound.totalThrottlingEnabled) {
               result.proxyEndpoints[0].quotas = [{
@@ -55,25 +52,32 @@ export class Json2Converter implements ApigeeConverterPlugin {
             }
       
             if (obj.environments && obj.environments.length > 0 && obj.environments[0].backendAudienceConfiguration) {
-              result.proxyEndpoints[0].auth[0].parameters["audience"] = obj.environments[0].backendAudienceConfiguration.backendAudience;
+              if (result && result.proxyEndpoints && result.proxyEndpoints[0].auth)
+                result.proxyEndpoints[0].auth[0].parameters["audience"] = obj.environments[0].backendAudienceConfiguration.backendAudience;
             }      
             if (obj.api.policies && obj.api.policies.inbound && obj.api.policies.inbound.validateJwtTokenAzureAdV1) {
-              result.proxyEndpoints[0].auth[0].parameters["issuerVer1"] = "https://issuerv1.idp.com";
+              if (result && result.proxyEndpoints && result.proxyEndpoints[0].auth)
+                result.proxyEndpoints[0].auth[0].parameters["issuerVer1"] = "https://issuerv1.idp.com";
             }
             if (obj.api.policies && obj.api.policies.inbound && obj.api.policies.inbound.validateJwtTokenAzureAdV2) {
-              result.proxyEndpoints[0].auth[0].parameters["issuerVer2"] = "https://issuerv2.idp.com";
+              if (result && result.proxyEndpoints && result.proxyEndpoints[0].auth)
+                result.proxyEndpoints[0].auth[0].parameters["issuerVer2"] = "https://issuerv2.idp.com";
             }
+
+            resolve(result);
           }
           catch(error) {
-            console.log("Error converting JSON input: " + error);
+            // Conversion failed..
+            reject(error);
           }
         }
+        else 
+          reject(new Error("Format didn't match"))
       }
       catch(error) {
-        console.log("Error converting JSON input: " + error);
+        // Conversion failed..
+        reject(error);
       }
-
-      resolve(result);
     });
   }
 }

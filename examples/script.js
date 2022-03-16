@@ -1,3 +1,6 @@
+/* eslint-disable no-invalid-this */
+/* eslint-disable no-var */
+/* eslint-disable require-jsdoc */
 /*
 This example script creates a simple DevQuotaPlugin that applies a developer-specific quota policy
 to the proxy.
@@ -29,7 +32,7 @@ class DevQuotaPlugin {
   applyTemplate(inputConfig, processingVars, outputDir) {
     return new Promise((resolve, reject) => {
 
-      processingVars["preflow_request_policies"].push({name: "Dev-Quota"});
+      processingVars.get("preflow_request_policies").push({ name: "Dev-Quota" });
 
       resolve({
         files: [
@@ -43,10 +46,10 @@ class DevQuotaPlugin {
   }
 }
 
-for (var i=0; i<this.apigeeGenerator.plugins.length; i++) {
-  console.log(this.apigeeGenerator.plugins[i].constructor.name);
-  if (this.apigeeGenerator.plugins[i].constructor.name == "QuotaPlugin") {
-    this.apigeeGenerator.plugins[i] = new DevQuotaPlugin();
+for (var i=0; i<this.apigeeGenerator.profiles["default"].plugins.length; i++) {
+  console.log(this.apigeeGenerator.profiles["default"].plugins[i].constructor.name);
+  if (this.apigeeGenerator.profiles["default"].plugins[i].constructor.name == "QuotaPlugin") {
+    this.apigeeGenerator.profiles["default"].plugins[i] = new DevQuotaPlugin();
     break;
   }
 }

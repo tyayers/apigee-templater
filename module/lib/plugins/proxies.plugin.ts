@@ -57,10 +57,10 @@ export class ProxiesPlugin implements ApigeeTemplatePlugin {
             {
               basePath: inputConfig.basePath,
               targetName: inputConfig.targetName,
-              preflow_request_policies: processingVars["preflow_request_policies"],
-              preflow_response_policies: processingVars["preflow_response_policies"],
-              postflow_request_policies: processingVars["postflow_request_policies"],
-              postflow_response_policies: processingVars["postflow_response_policies"],
+              preflow_request_policies: processingVars.get("preflow_request_policies"),
+              preflow_response_policies: processingVars.get("preflow_response_policies"),
+              postflow_request_policies: processingVars.get("postflow_request_policies"),
+              postflow_response_policies: processingVars.get("postflow_response_policies"),
             })
         }
       ];

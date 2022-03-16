@@ -5,13 +5,8 @@ import inquirer from 'inquirer';
 import chalk from 'chalk';
 import 'dotenv/config'
 
-import {
-  ApigeeTemplateInput, ProxiesPlugin, TargetsPlugin, AuthSfPlugin,
-  AuthApiKeyPlugin, QuotaPlugin, SpikeArrestPlugin, ApigeeTemplateService,
-  ApigeeGenerator, Json1Converter, Json2Converter, OpenApiV3Converter
-} from 'apigee-templater-module'
+import { ApigeeTemplateInput, ApigeeTemplateService, ApigeeGenerator } from 'apigee-templater-module'
 import { ApigeeService, ApiManagementInterface, ProxyRevision } from 'apigee-x-module'
-
 
 /**
  * The CLI class parses and collects the user inputs, and generates / depoys the proxy on-demand.
@@ -22,21 +17,23 @@ import { ApigeeService, ApiManagementInterface, ProxyRevision } from 'apigee-x-m
  * @typedef {cli}
  */
 export default class cli {
+
+  /**
+   * The ApigeeService object, using default application credentials
+   * @date 3/16/2022 - 11:20:23 AM
+   *
+   * @type {ApiManagementInterface}
+   */
   apigeeService: ApiManagementInterface = new ApigeeService();
 
-  apigeeGenerator: ApigeeTemplateService = new ApigeeGenerator([
-    new SpikeArrestPlugin(),
-    new AuthApiKeyPlugin(),
-    new AuthSfPlugin(),
-    new QuotaPlugin(),
-    new TargetsPlugin(),
-    new ProxiesPlugin(),
-  ], [
-    new Json1Converter(),
-    new Json2Converter(),
-    new OpenApiV3Converter()
-  ]);
 
+  /**
+   * The ApigeeGenerator object using the default profile of plugins
+   * @date 3/16/2022 - 11:20:50 AM
+   *
+   * @type {ApigeeTemplateService}
+   */
+  apigeeGenerator: ApigeeTemplateService = new ApigeeGenerator();
 
   /**
    * Parses the user inputs
@@ -103,7 +100,7 @@ export default class cli {
         name: 'name',
         message: 'What should the proxy be called?',
         default: 'MyProxy',
-        transformer: (input) => {
+        transformer: (input: string) => {
           return input.replace(/ /g, "-");
         }
       });
@@ -114,7 +111,7 @@ export default class cli {
         type: 'input',
         name: 'basePath',
         message: 'Which base path should be used?',
-        transformer: (input) => {
+        transformer: (input: string) => {
           return `/${input}`;
         }
       });
@@ -125,7 +122,7 @@ export default class cli {
         type: 'input',
         name: 'targetUrl',
         message: 'Which backend target should be called?',
-        transformer: (input) => {
+        transformer: (input: string) => {
           return `https://${input}`;
         }
       });
@@ -144,7 +141,7 @@ export default class cli {
         type: 'input',
         name: 'keyPath',
         message: 'No GOOGLE_APPLICATION_CREDENTIALS found, please enter a path to a GCP project JSON key:',
-        when: (answers) => {
+        when: (answers: cliArgs) => {
           return answers.deploy
         }
       });
@@ -155,10 +152,10 @@ export default class cli {
         type: 'list',
         name: 'environment',
         message: 'Which Apigee X environment to you want to deploy to?',
-        when: (answers) => {
+        when: (answers: cliArgs) => {
           return answers.deploy
         },
-        choices: (answers) => {
+        choices: (answers: cliArgs) => {
           if (answers.keyPath) process.env.GOOGLE_APPLICATION_CREDENTIALS = answers.keyPath;
 
           this.apigeeService.getEnvironments().then((result) => {
@@ -240,7 +237,7 @@ export default class cli {
         console.error(`${chalk.redBright("! Error:")} Invalid GCP service account key file passed, please pass a service account with Apigee deployment roles attached.`);
       }
 
-      const newInput: ApigeeTemplateInput = {
+      const newInput: ApigeeTemplateInput = new ApigeeTemplateInput({
         name: options.name,
         proxyEndpoints: [
           {
@@ -250,7 +247,8 @@ export default class cli {
             targetUrl: options.targetUrl
           }
         ]
-      }
+      });
+      
       options.input = JSON.stringify(newInput);
     }
 
@@ -264,7 +262,8 @@ export default class cli {
     if (options.verbose) this.logVerbose(options.input, "template:");
 
     this.apigeeGenerator.generateProxyFromString(options.input, _proxyDir).then((result) => {
-      console.log(`${chalk.green(">")} Proxy ${chalk.bold(chalk.blue(result.template.name))} generated to ${chalk.magentaBright(chalk.bold(result.localPath))} in ${chalk.bold(chalk.green(Math.round(result.duration) + " milliseconds"))}.`);
+      if (result && result.template)
+        console.log(`${chalk.green(">")} Proxy ${chalk.bold(chalk.blue(result.template.name))} generated to ${chalk.magentaBright(chalk.bold(result.localPath))} in ${chalk.bold(chalk.green(Math.round(result.duration) + " milliseconds"))}.`);
 
       if (options.deploy && !options.environment) {
         console.error(`${chalk.redBright("! Error:")} No environment found to deploy to, please pass the -e parameter with an Apigee X environment.`);
@@ -274,22 +273,26 @@ export default class cli {
       }
       else if (options.deploy) {
         const startTime = performance.now();
-        this.apigeeService.updateProxy(result.template.name, _proxyDir + "/" + result.template.name + ".zip").then((updateResult: ProxyRevision) => {
-          if (updateResult && updateResult.revision) {
-            this.apigeeService.deployProxyRevision(options.environment, result.template.name, updateResult.revision).then(() => {
-              const endTime = performance.now();
-              const duration = endTime - startTime;
-              console.log(`${chalk.green(">")} Proxy ${chalk.bold(chalk.blue(result.template.name + " version " + updateResult.revision))} deployed to environment ${chalk.bold(chalk.magentaBright(options.environment))} in ${chalk.bold(chalk.green(Math.round(duration) + " milliseconds"))}.`);
-            }).catch(() => {
+        if (result && result.template) {
+          this.apigeeService.updateProxy(result.template.name, _proxyDir + "/" + result.template.name + ".zip").then((updateResult: ProxyRevision) => {
+            if (updateResult && updateResult.revision) {
+              if (result && result.template)
+                this.apigeeService.deployProxyRevision(options.environment, result.template.name, updateResult.revision).then(() => {
+                  const endTime = performance.now();
+                  const duration = endTime - startTime;
+                  if (result && result.template)
+                    console.log(`${chalk.green(">")} Proxy ${chalk.bold(chalk.blue(result.template.name + " version " + updateResult.revision))} deployed to environment ${chalk.bold(chalk.magentaBright(options.environment))} in ${chalk.bold(chalk.green(Math.round(duration) + " milliseconds"))}.`);
+                }).catch(() => {
+                  console.error(`${chalk.redBright("! Error:")} Error deploying proxy revision.`);
+                })
+            }
+          }).catch((error) => {
+            if (error && error.response && error.response.status && error.response.status == 400)
+              console.error(`${chalk.redBright("! Error:")} Error in proxy bundle definition, try importing manually for more detailed error information.`);
+            else
               console.error(`${chalk.redBright("! Error:")} Error deploying proxy revision.`);
-            })
-          }
-        }).catch((error) => {
-          if (error && error.response && error.response.status && error.response.status == 400)
-            console.error(`${chalk.redBright("! Error:")} Error in proxy bundle definition, try importing manually for more detailed error information.`);
-          else
-            console.error(`${chalk.redBright("! Error:")} Error deploying proxy revision.`);
-        });
+          });
+        }
       }
     }).catch(() => {
       console.error(`${chalk.redBright("! Error:")} Error templating proxy, invalid inputs given.`);
