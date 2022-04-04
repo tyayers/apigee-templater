@@ -1,5 +1,21 @@
-import Handlebars from 'handlebars';
-import { ApigeeTemplatePlugin, PlugInResult, proxyEndpoint } from "../interfaces";
+/**
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import Handlebars from 'handlebars'
+import { ApigeeTemplatePlugin, PlugInResult, proxyEndpoint } from '../interfaces'
 
 /**
  * Creates proxy endpoints for the template
@@ -11,7 +27,6 @@ import { ApigeeTemplatePlugin, PlugInResult, proxyEndpoint } from "../interfaces
  * @implements {ApigeeTemplatePlugin}
  */
 export class ProxiesPlugin implements ApigeeTemplatePlugin {
-
   snippet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <ProxyEndpoint name="default">
       <PreFlow name="PreFlow">
@@ -47,25 +62,25 @@ export class ProxiesPlugin implements ApigeeTemplatePlugin {
    * @param {Map<string, object>} processingVars
    * @return {Promise<PlugInResult>}
    */
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult> {
+  applyTemplate (inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult> {
     return new Promise((resolve) => {
-      const fileResult: PlugInResult = new PlugInResult();
+      const fileResult: PlugInResult = new PlugInResult()
       fileResult.files = [
         {
-          path: "/proxies/" + inputConfig.name + ".xml",
+          path: '/proxies/' + inputConfig.name + '.xml',
           contents: this.template(
             {
               basePath: inputConfig.basePath,
               targetName: inputConfig.targetName,
-              preflow_request_policies: processingVars.get("preflow_request_policies"),
-              preflow_response_policies: processingVars.get("preflow_response_policies"),
-              postflow_request_policies: processingVars.get("postflow_request_policies"),
-              postflow_response_policies: processingVars.get("postflow_response_policies"),
+              preflow_request_policies: processingVars.get('preflow_request_policies'),
+              preflow_response_policies: processingVars.get('preflow_response_policies'),
+              postflow_request_policies: processingVars.get('postflow_request_policies'),
+              postflow_response_policies: processingVars.get('postflow_response_policies')
             })
         }
-      ];
+      ]
 
-      resolve(fileResult);
-    });
+      resolve(fileResult)
+    })
   }
 }

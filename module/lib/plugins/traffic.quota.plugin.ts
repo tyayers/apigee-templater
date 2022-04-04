@@ -1,5 +1,21 @@
-import Handlebars from 'handlebars';
-import { ApigeeTemplatePlugin, proxyEndpoint, PlugInResult } from "../interfaces";
+/**
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import Handlebars from 'handlebars'
+import { ApigeeTemplatePlugin, proxyEndpoint, PlugInResult } from '../interfaces'
 
 /**
  * Plugin for traffic quota templating
@@ -11,7 +27,6 @@ import { ApigeeTemplatePlugin, proxyEndpoint, PlugInResult } from "../interfaces
  * @implements {ApigeeTemplatePlugin}
  */
 export class QuotaPlugin implements ApigeeTemplatePlugin {
-
   snippet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Quota continueOnError="false" enabled="true" name="Quota-{{index}}" type="calendar">
       <DisplayName>Quota-{{index}}</DisplayName>
@@ -38,17 +53,16 @@ export class QuotaPlugin implements ApigeeTemplatePlugin {
    * @param {Map<string, any>} processingVars
    * @return {Promise<PlugInResult>}
    */
-  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult> {
+  applyTemplate (inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult> {
     return new Promise((resolve) => {
-      const fileResult: PlugInResult = new PlugInResult();
+      const fileResult: PlugInResult = new PlugInResult()
 
       if (inputConfig.quotas && inputConfig.quotas.length > 0) {
-
-        fileResult.files = [];
+        fileResult.files = []
         for (const i in inputConfig.quotas) {
           if (inputConfig.quotas[i].count > 0) {
             fileResult.files.push({
-              path: "/policies/Quota-" + (Number(i) + 1).toString() + ".xml",
+              path: '/policies/Quota-' + (Number(i) + 1).toString() + '.xml',
               contents: this.template({
                 index: (Number(i) + 1),
                 count: inputConfig.quotas[i].count,
@@ -58,12 +72,12 @@ export class QuotaPlugin implements ApigeeTemplatePlugin {
 
             // TODO: refactor to get rid of ugly Map string object here
             // eslint-disable-next-line @typescript-eslint/ban-types
-            (processingVars.get("preflow_request_policies") as Object[]).push({ name: "Quota-" + (Number(i) + 1).toString() });
+            (processingVars.get('preflow_request_policies') as Object[]).push({ name: 'Quota-' + (Number(i) + 1).toString() })
           }
         }
       }
 
-      resolve(fileResult);
-    });
+      resolve(fileResult)
+    })
   }
 }

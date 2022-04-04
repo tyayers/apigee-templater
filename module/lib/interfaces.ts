@@ -1,8 +1,34 @@
+/**
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/** A proxy endpoint describes a basepath, targets and other proxy features */
+export class proxyEndpoint {
+  name = '';
+  basePath = '';
+  targetName?: string;
+  targetUrl = '';
+  auth?: authConfig[];
+  quotas?: quotaConfig[];
+  spikeArrest?: spikeArrestConfig;
+}
 
 /** Describes a proxy to be templated */
 export class ApigeeTemplateInput {
-  name = "MyProxy";
-  profile = "default";
+  name = 'MyProxy';
+  profile = 'default';
   proxyEndpoints: proxyEndpoint[] = [];
 
   /**
@@ -13,20 +39,9 @@ export class ApigeeTemplateInput {
    * @public
    * @param {?Partial<ApigeeTemplateInput>} [init]
    */
-  public constructor(init?:Partial<ApigeeTemplateInput>) {
-    Object.assign(this, init);
+  public constructor (init?:Partial<ApigeeTemplateInput>) {
+    Object.assign(this, init)
   }
-}
-
-/** A proxy endpoint describes a basepath, targets and other proxy features */
-export class proxyEndpoint {
-  name = "";
-  basePath = "";
-  targetName?: string;
-  targetUrl = "";
-  auth?: authConfig[];
-  quotas?: quotaConfig[];
-  spikeArrest?: spikeArrestConfig;
 }
 
 /** Authorization config for an endpoint */
@@ -38,22 +53,22 @@ export class authConfig {
 /** Quota config for an endpoint */
 export class quotaConfig {
   count = 5;
-  timeUnit = "minute";
+  timeUnit = 'minute';
   condition?: string;
 }
 
 /** Spike arrest config for an endpoint */
 export class spikeArrestConfig {
-  rate = "30s";
+  rate = '30s';
 }
 
 export enum authTypes {
   // eslint-disable-next-line no-unused-vars
-  apikey = "apikey",
+  apikey = 'apikey',
   // eslint-disable-next-line no-unused-vars
-  jwt = "jwt",
+  jwt = 'jwt',
   // eslint-disable-next-line no-unused-vars
-  sharedflow = "sharedflow"
+  sharedflow = 'sharedflow'
 }
 
 export interface ApigeeTemplateService {
@@ -65,8 +80,8 @@ export interface ApigeeTemplateService {
 export class GenerateResult {
   success = false;
   duration = 0;
-  message = "";
-  localPath = "";
+  message = '';
+  localPath = '';
   template?: ApigeeTemplateInput;
 }
 
@@ -77,8 +92,8 @@ export class PlugInResult {
 
 /** Plugin file results to be written to disk */
 export class PlugInFile {
-  path = "";
-  contents = "";
+  path = '';
+  contents = '';
 }
 
 /** Profile definition with plugins to be used for conversion */

@@ -8,7 +8,15 @@
       "name": "Debug CLI",
       "type": "node",
       "request": "launch",
-      "args": ["${workspaceRoot}/cli/bin/apigee-template", "-f", "/home/tylerayers/Temp/input.json", "--deploy", "true", "--environment", "test1"],
+      "args": [
+        "${workspaceRoot}/cli/bin/apigee-template",
+        "-f",
+        "/home/tylerayers/Temp/input.json",
+        "--deploy",
+        "true",
+        "--environment",
+        "test1"
+      ],
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
       "sourceMaps": true,
       "cwd": "${workspaceRoot}/cli",
@@ -36,18 +44,18 @@
       "request": "launch",
       "program": "${workspaceFolder}/module/node_modules/mocha/bin/_mocha",
       "args": [
-          "-r",
-          "ts-node/register",
-          "--timeout",
-          "999999",
-          "--colors",
-          "${workspaceFolder}/module/test/**/*.test.ts",
+        "-r",
+        "ts-node/register",
+        "--timeout",
+        "999999",
+        "--colors",
+        "${workspaceFolder}/module/test/**/*.test.ts"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/module",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
-      "env":{
+      "env": {
         "GOOGLE_APPLICATION_CREDENTIALS": "/home/tylerayers/key.json"
       }
     }

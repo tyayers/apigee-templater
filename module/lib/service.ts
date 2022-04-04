@@ -1,16 +1,32 @@
-import archiver from 'archiver';
-import fs from 'fs';
-import { performance } from 'perf_hooks';
-import { ApigeeTemplateService, ApigeeTemplateInput, ApigeeTemplateProfile, PlugInResult, PlugInFile, ApigeeConverterPlugin, GenerateResult } from "./interfaces";
-import { ProxiesPlugin } from "./plugins/proxies.plugin";
-import { TargetsPlugin } from "./plugins/targets.plugin";
-import { AuthSfPlugin } from "./plugins/auth.sf.plugin";
-import { AuthApiKeyPlugin } from "./plugins/auth.apikey.plugin";
-import { QuotaPlugin } from "./plugins/traffic.quota.plugin";
-import { SpikeArrestPlugin } from "./plugins/traffic.spikearrest.plugin";
-import { Json1Converter } from "./converters/json1.plugin";
-import { Json2Converter } from "./converters/json2.plugin";
-import { OpenApiV3Converter } from "./converters/openapiv3.yaml.plugin";
+/**
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import archiver from 'archiver'
+import fs from 'fs'
+import { performance } from 'perf_hooks'
+import { ApigeeTemplateService, ApigeeTemplateInput, ApigeeTemplateProfile, PlugInResult, PlugInFile, ApigeeConverterPlugin, GenerateResult } from './interfaces'
+import { ProxiesPlugin } from './plugins/proxies.plugin'
+import { TargetsPlugin } from './plugins/targets.plugin'
+import { AuthSfPlugin } from './plugins/auth.sf.plugin'
+import { AuthApiKeyPlugin } from './plugins/auth.apikey.plugin'
+import { QuotaPlugin } from './plugins/traffic.quota.plugin'
+import { SpikeArrestPlugin } from './plugins/traffic.spikearrest.plugin'
+import { Json1Converter } from './converters/json1.plugin'
+import { Json2Converter } from './converters/json2.plugin'
+import { OpenApiV3Converter } from './converters/openapiv3.yaml.plugin'
 
 /**
  * ApigeeGenerator runs the complete templating operation with all injected plugins
@@ -22,7 +38,6 @@ import { OpenApiV3Converter } from "./converters/openapiv3.yaml.plugin";
  * @implements {ApigeeTemplateService}
  */
 export class ApigeeGenerator implements ApigeeTemplateService {
-
   converterPlugins: ApigeeConverterPlugin[] = [
     new Json1Converter(),
     new Json2Converter(),
@@ -30,14 +45,14 @@ export class ApigeeGenerator implements ApigeeTemplateService {
   ];
 
   profiles: Record<string, ApigeeTemplateProfile> = {
-    "default": {
+    default: {
       plugins: [
         new SpikeArrestPlugin(),
         new AuthApiKeyPlugin(),
         new AuthSfPlugin(),
         new QuotaPlugin(),
         new TargetsPlugin(),
-        new ProxiesPlugin(),
+        new ProxiesPlugin()
       ]
     }
   };
@@ -51,16 +66,16 @@ export class ApigeeGenerator implements ApigeeTemplateService {
    * @param {?Record<string, ApigeeTemplateProfile>} [customProfiles]
    * @param {?ApigeeConverterPlugin[]} [customInputConverters]
    */
-  constructor(customProfiles?: Record<string, ApigeeTemplateProfile>, customInputConverters?: ApigeeConverterPlugin[]) {
+  constructor (customProfiles?: Record<string, ApigeeTemplateProfile>, customInputConverters?: ApigeeConverterPlugin[]) {
     // Override any profiles passed optionally in constructor
     if (customProfiles) {
       for (const [key, value] of Object.entries(customProfiles)) {
-        this.profiles[key] = value;
+        this.profiles[key] = value
       }
     }
     // Replace input converters if any passed in contructor
     if (customInputConverters) {
-      this.converterPlugins = customInputConverters;
+      this.converterPlugins = customInputConverters
     }
   }
 
@@ -71,28 +86,27 @@ export class ApigeeGenerator implements ApigeeTemplateService {
    * @param {string} inputString
    * @return {Promise<ApigeeTemplateInput>}
    */
-  convertStringToTemplate(inputString: string): Promise<ApigeeTemplateInput> {
+  convertStringToTemplate (inputString: string): Promise<ApigeeTemplateInput> {
     return new Promise((resolve, reject) => {
-      const conversions: Promise<ApigeeTemplateInput>[] = [];
+      const conversions: Promise<ApigeeTemplateInput>[] = []
       for (const plugin of this.converterPlugins) {
-        conversions.push(plugin.convertInput(inputString));
+        conversions.push(plugin.convertInput(inputString))
       }
 
       Promise.allSettled(conversions).then((values) => {
-        let conversionSuccessful = false;
+        let conversionSuccessful = false
 
         for (const value of values) {
           if (value.status == 'fulfilled') {
-            conversionSuccessful = true;
-            resolve(value.value);
-            break;
+            conversionSuccessful = true
+            resolve(value.value)
+            break
           }
         }
 
-        if (!conversionSuccessful)
-          reject(new Error("No conversion was found for the input string!"))
+        if (!conversionSuccessful) { reject(new Error('No conversion was found for the input string!')) }
       })
-    });
+    })
   }
 
   /**
@@ -103,17 +117,17 @@ export class ApigeeGenerator implements ApigeeTemplateService {
    * @param {string} outputDir
    * @return {Promise<GenerateResult>} Result including path to generated proxy bundle
    */
-  generateProxyFromString(inputString: string, outputDir: string): Promise<GenerateResult> {
+  generateProxyFromString (inputString: string, outputDir: string): Promise<GenerateResult> {
     return new Promise((resolve, reject) => {
       this.convertStringToTemplate(inputString).then((result) => {
         this.generateProxy(result, outputDir).then((generateResult) => {
-          resolve(generateResult);
+          resolve(generateResult)
         })
       }).catch((error) => {
-        console.error(error);
-        reject(error);
+        console.error(error)
+        reject(error)
       })
-    });
+    })
   }
 
   /**
@@ -124,70 +138,69 @@ export class ApigeeGenerator implements ApigeeTemplateService {
    * @param {string} outputDir
    * @return {Promise<GenerateResult>} GenerateResult object including path to generated proxy bundle
    */
-  generateProxy(genInput: ApigeeTemplateInput, outputDir: string): Promise<GenerateResult> {
+  generateProxy (genInput: ApigeeTemplateInput, outputDir: string): Promise<GenerateResult> {
     return new Promise((resolve, reject) => {
-      const startTime = performance.now();
+      const startTime = performance.now()
 
       const result: GenerateResult = {
         success: true,
         duration: 0,
-        message: "",
-        localPath: ""
+        message: '',
+        localPath: ''
       }
 
-      const processingVars: Map<string, object> = new Map<string, object>();
-      const newOutputDir = outputDir + "/" + genInput.name + "/apiproxy";
-      fs.mkdirSync(newOutputDir, { recursive: true });
+      const processingVars: Map<string, object> = new Map<string, object>()
+      const newOutputDir = outputDir + '/' + genInput.name + '/apiproxy'
+      fs.mkdirSync(newOutputDir, { recursive: true })
 
-      fs.mkdirSync(newOutputDir + "/proxies", { recursive: true });
-      fs.mkdirSync(newOutputDir + "/targets", { recursive: true });
-      fs.mkdirSync(newOutputDir + "/policies", { recursive: true });
-      fs.mkdirSync(newOutputDir + "/resources", { recursive: true });
+      fs.mkdirSync(newOutputDir + '/proxies', { recursive: true })
+      fs.mkdirSync(newOutputDir + '/targets', { recursive: true })
+      fs.mkdirSync(newOutputDir + '/policies', { recursive: true })
+      fs.mkdirSync(newOutputDir + '/resources', { recursive: true })
 
       for (const endpoint of genInput.proxyEndpoints) {
         // Initialize variables for endpoint
-        processingVars.set("preflow_request_policies", []);
-        processingVars.set("preflow_response_policies", []);
-        processingVars.set("postflow_request_policies", []);
-        processingVars.set("postflow_response_policies", []);
+        processingVars.set('preflow_request_policies', [])
+        processingVars.set('preflow_response_policies', [])
+        processingVars.set('postflow_request_policies', [])
+        processingVars.set('postflow_response_policies', [])
 
         if (Object.keys(this.profiles).includes(genInput.profile)) {
           for (const plugin of this.profiles[genInput.profile].plugins) {
             plugin.applyTemplate(endpoint, processingVars).then((result: PlugInResult) => {
               result.files.forEach((file: PlugInFile) => {
-                fs.writeFileSync(newOutputDir + file.path, file.contents);
-              });
-            });
+                fs.writeFileSync(newOutputDir + file.path, file.contents)
+              })
+            })
           }
-        }
-        else {
+        } else {
           reject(new Error(`Profile ${genInput.profile} was not found!  No conversion is possible without a valid profile (current profiles available: ${Object.keys(this.profiles)})`))
         }
       }
 
-      const archive = archiver('zip');
+      const archive = archiver('zip')
       archive.on('error', function (err: Error) {
-        reject(err);
-      });
+        reject(err)
+      })
 
-      archive.directory(outputDir + "/" + genInput.name, false);
+      archive.directory(outputDir + '/' + genInput.name, false)
 
-      const output = fs.createWriteStream(outputDir + "/" + genInput.name + ".zip");
+      const output = fs.createWriteStream(outputDir + '/' + genInput.name + '.zip')
 
       archive.on('end', () => {
         // Zip is finished, cleanup files
-        fs.rmSync(outputDir + "/" + genInput.name, { recursive: true });
-        const endTime = performance.now();
-        result.duration = endTime - startTime;
+        fs.rmSync(outputDir + '/' + genInput.name, { recursive: true })
+        const endTime = performance.now()
+        result.duration = endTime - startTime
         result.message = `Proxy generation completed in ${Math.round(result.duration)} milliseconds.`
-        result.localPath = outputDir + "/" + genInput.name + ".zip";
-        result.template = genInput;
+        result.localPath = outputDir + '/' + genInput.name + '.zip'
+        result.template = genInput
 
-        resolve(result);
-      });
+        resolve(result)
+      })
 
-      archive.pipe(output);
-      archive.finalize();
-    });
+      archive.pipe(output)
+      archive.finalize()
+    })
   }
 }

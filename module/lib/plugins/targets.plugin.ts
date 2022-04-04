@@ -1,5 +1,21 @@
-import Handlebars from 'handlebars';
-import { ApigeeTemplatePlugin, PlugInResult, proxyEndpoint } from "../interfaces";
+/**
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import Handlebars from 'handlebars'
+import { ApigeeTemplatePlugin, PlugInResult, proxyEndpoint } from '../interfaces'
 
 /**
  * Plugin for generating targets
@@ -11,7 +27,6 @@ import { ApigeeTemplatePlugin, PlugInResult, proxyEndpoint } from "../interfaces
  * @implements {ApigeeTemplatePlugin}
  */
 export class TargetsPlugin implements ApigeeTemplatePlugin {
-
   snippet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <TargetEndpoint name="{{targetName}}">
       <PreFlow name="PreFlow">
@@ -38,18 +53,18 @@ export class TargetsPlugin implements ApigeeTemplatePlugin {
    * @param {Map<string, object>} processingVars
    * @return {Promise<PlugInResult>}
    */
-  applyTemplate(inputConfig: proxyEndpoint): Promise<PlugInResult> {
+  applyTemplate (inputConfig: proxyEndpoint): Promise<PlugInResult> {
     return new Promise((resolve) => {
-      const fileResult: PlugInResult = new PlugInResult();
+      const fileResult: PlugInResult = new PlugInResult()
 
       fileResult.files = [
         {
-          path: "/targets/" + inputConfig.targetName + ".xml",
+          path: '/targets/' + inputConfig.targetName + '.xml',
           contents: this.template({ targetName: inputConfig.targetName, targetUrl: inputConfig.targetUrl })
         }
-      ];
+      ]
 
-      resolve(fileResult);
-    });
+      resolve(fileResult)
+    })
   }
 }

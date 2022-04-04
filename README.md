@@ -63,7 +63,7 @@ curl --location --request POST 'http://localhost:8080/apigeegen/file' \
   ]
 }'
 ```
-A **test web frontend of the REST API** can be tested [here](https://apigee-templater-h7pi7igbcq-ew.a.run.app/). 
+A **test web frontend of the REST API** can be tested [here](https://apigee-templater-h7pi7igbcq-ew.a.run.app/).
 
 ### Typescript/Javascript
 First install and import into your project.

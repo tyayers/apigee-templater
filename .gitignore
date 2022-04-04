@@ -1,5 +1,6 @@
 *.zip
 proxies
+/report
 
 # Logs
 logs
