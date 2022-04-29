@@ -6,6 +6,10 @@ This tool assumes you already have an Apigee X org and environment provisioned (
 
 ## TLDR;
 
+You can try out the tool easily in Google Cloud Shell including a tutorial walk-through of the features by clicking here:
+
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/tyayers/apigee-templater&cloudshell_git_branch=main&cloudshell_workspace=.&cloudshell_tutorial=docs/cloudshell-tutorial.md)
+
 ### Proxy a web endpoint
 
 Just run this command to deploy a sample test proxy to your Apigee X **eval** environment (or change to any environment) in your current project.
@@ -42,10 +46,6 @@ The module & CLI can generate and deploy Apigee X proxies with these features ou
 The templating engine uses the [Handlebars](https://handlebarsjs.com/) framework to build any type of proxy based on structured inputs.  And because the logic is contained in Javascript or Typescript plugins, logic can be added for any type of requirement.
 
 ## Getting Started
-
-You can try out the tool easily in Google Cloud Shell including a tutorial walk-through of the features by clicking here:
-
-[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/tyayers/apigee-templater&cloudshell_git_branch=main&cloudshell_workspace=.&cloudshell_tutorial=docs/cloudshell-tutorial.md)
 
 ### CLI
 Install the CLI like this.
