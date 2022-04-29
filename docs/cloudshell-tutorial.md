@@ -58,8 +58,10 @@ Test the proxy with curl to see how the data can be provided through a REST API 
 ```sh
 curl https://$APIGEE_HOST/trips?filter=start_station_id=2567&orderBy=duration_minutes%20asc&pageSize=5&pageToken=2
 ```
-You should see 5 records returned in clean JSON format.
+You should see 5 records returned in clean JSON format. The proxy is doing the query and conversion into a RESTful format.
+
 ---
+
 ## Conclusion
 <walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
 
