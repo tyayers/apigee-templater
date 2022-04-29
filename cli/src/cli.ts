@@ -296,7 +296,6 @@ export default class cli {
         try {
           if (result && result.template) {
             this.apigeeService.updateProxy(result.template.name, _proxyDir + '/' + result.template.name + '.zip').then((updateResult: ProxyRevision) => {
-              console.error("TODO hi2");
               if (updateResult && updateResult.revision) {
                 if (result && result.template) {
                   this.apigeeService.deployProxyRevision(options.environment, result.template.name, updateResult.revision, options.deployServiceAccount).then(() => {
