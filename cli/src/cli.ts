@@ -56,28 +56,32 @@ export default class cli {
    * @param {cliArgs} rawArgs The command line arguments
    * @return {cliArgs}} Processed arguments
    */
-  parseArgumentsIntoOptions (rawArgs: string[]): cliArgs {
+  parseArgumentsIntoOptions(rawArgs: string[]): cliArgs {
     const args = arg(
       {
         '--file': String,
         '--input': String,
         '--deploy': Boolean,
+        '--deployServiceAccount': String,
         '--environment': String,
         '--filter': String,
         '--name': String,
         '--basePath': String,
         '--targetUrl': String,
+        '--targetBigQueryTable': String,
         '--verbose': Boolean,
         '--keyPath': String,
         '--help': Boolean,
         '-f': '--file',
         '-i': '--input',
         '-d': '--deploy',
+        '-s': '--deployServiceAccount',
         '-e': '--environment',
         '-l': '--filter',
         '-n': '--name',
         '-b': '--basePath',
         '-t': '--targetUrl',
+        '-q': '--targetBigQueryTable',
         '-v': '--verbose',
         '-k': '--keyPath',
         '-h': '--help'
@@ -90,11 +94,13 @@ export default class cli {
       file: args['--file'] || '',
       input: args['--input'] || '',
       deploy: args['--deploy'] || false,
+      deployServiceAccount: args['--deployServiceAccount'] || '',
       environment: args['--environment'] || '',
       filter: args['--filter'] || '',
       name: args['--name'] || '',
       basePath: args['--basePath'] || '',
       targetUrl: args['--targetUrl'] || '',
+      targetBigQueryTable: args['--targetBigQueryTable'] || '',
       verbose: args['--verbose'] || false,
       keyPath: args['--keyPath'] || '',
       help: args['--help'] || false
@@ -106,7 +112,7 @@ export default class cli {
    * @param {cliArgs} options The options collection of user inputs
    * @return {cliArgs} Updated cliArgs options collection
    */
-  async promptForMissingOptions (options: cliArgs): Promise<cliArgs> {
+  async promptForMissingOptions(options: cliArgs): Promise<cliArgs> {
     const questions = []
     if (!options.name) {
       questions.push({
@@ -135,7 +141,7 @@ export default class cli {
       questions.push({
         type: 'input',
         name: 'targetUrl',
-        message: 'Which backend target should be called?',
+        message: 'Which backend target URL should be called?',
         transformer: (input: string) => {
           return `https://${input}`
         }
@@ -150,41 +156,20 @@ export default class cli {
       })
     }
 
-    if (!options.keyPath) {
-      questions.push({
-        type: 'input',
-        name: 'keyPath',
-        message: 'No GOOGLE_APPLICATION_CREDENTIALS found, please enter a path to a GCP project JSON key:',
-        when: (answers: cliArgs) => {
-          return answers.deploy
-        }
-      })
-    }
-
     if (!options.environment) {
       questions.push({
-        type: 'list',
+        type: 'input',
         name: 'environment',
         message: 'Which Apigee X environment to you want to deploy to?',
         when: (answers: cliArgs) => {
           return answers.deploy
-        },
-        choices: (answers: cliArgs) => {
-          if (answers.keyPath) process.env.GOOGLE_APPLICATION_CREDENTIALS = answers.keyPath
-
-          this.apigeeService.getEnvironments().then((result) => {
-            return result
-          }).catch(() => {
-            console.error(`${chalk.redBright('! Error:')} Invalid GCP service account key file passed, please pass a service account with Apigee deployment roles attached.`)
-            return []
-          })
         }
       })
     }
 
     const answers = await inquirer.prompt(questions)
-    if (answers.basePath && !answers.basePath.startsWith('/')) { answers.basePath = '/' + answers.basePath }
 
+    if (answers.basePath && !answers.basePath.startsWith('/')) { answers.basePath = '/' + answers.basePath }
     if (answers.targetUrl && !answers.targetUrl.startsWith('https://')) { answers.targetUrl = 'https://' + answers.targetUrl }
 
     return {
@@ -201,7 +186,7 @@ export default class cli {
   /**
    * Prints example and full commands
    **/
-  printHelp () {
+  printHelp() {
     console.log('')
     console.log(`${chalk.bold(chalk.blueBright('Simple examples:'))}`)
     console.log(`apigee-template ${chalk.grey('# Start interactive mode to enter the parameters.')}`)
@@ -223,7 +208,7 @@ export default class cli {
    * @async
    * @param {cliArgs} args The user input args to the process
    */
-  async process (args: string[]) {
+  async process(args: string[]) {
     let options: cliArgs = this.parseArgumentsIntoOptions(args)
     if (options.keyPath) process.env.GOOGLE_APPLICATION_CREDENTIALS = options.keyPath
     if (options.verbose) this.logVerbose(JSON.stringify(options), 'options:')
@@ -240,24 +225,49 @@ export default class cli {
     }
 
     if (!options.input && !options.file) {
-      if (process.env.GOOGLE_APPLICATION_CREDENTIALS) options.keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS
+      if (process.env.GOOGLE_APPLICATION_CREDENTIALS) options.keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      // If a BigQuery table was passed in, set it to targetUrl as well to prevent prompts (we have our target)
+      if (options.targetBigQueryTable) options.targetUrl = options.targetBigQueryTable;
       try {
         options = await this.promptForMissingOptions(options)
       } catch (error) {
-        console.error(`${chalk.redBright('! Error:')} Invalid GCP service account key file passed, please pass a service account with Apigee deployment roles attached.`)
+        console.log("hello")
+        console.error(`${chalk.redBright('! Error:')} Error during prompt for inputs, that's all we know.`)
+        if (options.verbose) this.logVerbose(JSON.stringify(error), 'prompt error:')
       }
 
-      const newInput: ApigeeTemplateInput = new ApigeeTemplateInput({
-        name: options.name,
-        proxyEndpoints: [
-          {
-            name: 'default',
-            basePath: options.basePath,
-            targetName: 'default',
-            targetUrl: options.targetUrl
-          }
-        ]
-      })
+      let newInput: ApigeeTemplateInput;
+
+      if (options.targetBigQueryTable)
+        newInput = new ApigeeTemplateInput({
+          name: options.name,
+          profile: "bigquery",
+          endpoints: [
+            {
+              name: 'default',
+              basePath: options.basePath,
+              target: {
+                name: 'default',
+                table: options.targetBigQueryTable
+              }
+            }
+          ]
+        });
+      else
+        newInput = new ApigeeTemplateInput({
+          name: options.name,
+          profile: "default",
+          endpoints: [
+            {
+              name: 'default',
+              basePath: options.basePath,
+              target: {
+                name: 'default',
+                url: options.targetUrl
+              }
+            }
+          ]
+        });
 
       options.input = JSON.stringify(newInput)
     }
@@ -277,20 +287,20 @@ export default class cli {
 
       if (options.deploy && !options.environment) {
         console.error(`${chalk.redBright('! Error:')} No environment found to deploy to, please pass the -e parameter with an Apigee X environment.`)
-      } else if (options.deploy && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-        console.error(`${chalk.redBright('! Error:')} No GCP credentials found, please set the GOOGLE_APPLICATION_CREDENTIALS environment variable or use the -k parameter, see https://cloud.google.com/docs/authentication/getting-started for more information.`)
       } else if (options.deploy) {
         const startTime = performance.now()
         if (result && result.template) {
           this.apigeeService.updateProxy(result.template.name, _proxyDir + '/' + result.template.name + '.zip').then((updateResult: ProxyRevision) => {
             if (updateResult && updateResult.revision) {
               if (result && result.template) {
-                this.apigeeService.deployProxyRevision(options.environment, result.template.name, updateResult.revision).then(() => {
+                this.apigeeService.deployProxyRevision(options.environment, result.template.name, updateResult.revision, options.deployServiceAccount).then(() => {
                   const endTime = performance.now()
                   const duration = endTime - startTime
+                  if (options.verbose) this.logVerbose(JSON.stringify(result), 'deploy result:')
                   if (result && result.template) { console.log(`${chalk.green('>')} Proxy ${chalk.bold(chalk.blue(result.template.name + ' version ' + updateResult.revision))} deployed to environment ${chalk.bold(chalk.magentaBright(options.environment))} in ${chalk.bold(chalk.green(Math.round(duration) + ' milliseconds'))}.`) }
-                }).catch(() => {
+                }).catch((error) => {
                   console.error(`${chalk.redBright('! Error:')} Error deploying proxy revision.`)
+                  if (options.verbose) this.logVerbose(JSON.stringify(error), 'deploy error:')
                 })
               }
             }
@@ -312,7 +322,7 @@ export default class cli {
    * @param {string} input The text message to log
    * @param {string} label An optional label as prefix label
    */
-  logVerbose (input: string, label: string) {
+  logVerbose(input: string, label: string) {
     if (label) console.log(`${chalk.grey('> ' + label)}`)
     console.log(`${chalk.grey('> ' + input)}`)
   }
@@ -329,11 +339,13 @@ class cliArgs {
   file = '';
   input = '';
   deploy = false;
+  deployServiceAccount = '';
   environment = '';
   filter = '';
   name = '';
   basePath = '';
   targetUrl = '';
+  targetBigQueryTable = '';
   verbose = false;
   keyPath = '';
   help = false;
@@ -359,6 +371,10 @@ const helpCommands = [
     description: 'Boolean true or false if the generated proxy should also be deployed to an Apigee X environment.'
   },
   {
+    name: '--deployServiceAccount, -s',
+    description: 'The Google Cloud service account email address to deploy with (used to authenticate or authorize target calls).'
+  },
+  {
     name: '--environment, -e',
     description: 'If --deploy is true, the environment to deploy the proxy to.'
   },
@@ -377,6 +393,10 @@ const helpCommands = [
   {
     name: '--targetUrl, t',
     description: 'If no --file or --input parameters are specified, this can set the target URL directly.'
+  },
+  {
+    name: '--targetBigQueryTable, q',
+    description: 'If no --file or --input parameters are specified, this can set a target BigQuery table directly.'
   },
   {
     name: '--verbose, -v',

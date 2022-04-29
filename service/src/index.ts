@@ -39,12 +39,14 @@ app.use((req, res, next) => {
     try {
       const newInput: ApigeeTemplateInput = new ApigeeTemplateInput({
         name: input.product.apiTestBackendProduct.productName,
-        proxyEndpoints: [
+        endpoints: [
           {
             name: 'default',
             basePath: input.product.apiTestBackendProduct.productName,
-            targetName: 'default',
-            targetUrl: input.environments[0].backendBaseUrl,
+            target: {
+              name: 'default',
+              url: input.environments[0].backendBaseUrl
+            },
             auth: [
               {
                 type: authTypes.sharedflow,

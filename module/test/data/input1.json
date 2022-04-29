@@ -1,12 +1,14 @@
 {
   "name": "testproxy",
   "profile": "default",
-  "proxyEndpoints": [
+  "endpoints": [
     {
       "name": "default",
       "basePath": "/httpbin",
-      "targetName": "default",
-      "targetUrl": "https://httpbin.org",
+      "target": {
+        "name": "default",
+        "url": "https://httpbin.org"
+      },
       "quotas": [
         {
           "count": "200",

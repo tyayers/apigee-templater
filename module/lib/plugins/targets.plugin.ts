@@ -53,16 +53,18 @@ export class TargetsPlugin implements ApigeeTemplatePlugin {
    * @param {Map<string, object>} processingVars
    * @return {Promise<PlugInResult>}
    */
-  applyTemplate (inputConfig: proxyEndpoint): Promise<PlugInResult> {
+  applyTemplate(inputConfig: proxyEndpoint): Promise<PlugInResult> {
     return new Promise((resolve) => {
       const fileResult: PlugInResult = new PlugInResult()
 
-      fileResult.files = [
-        {
-          path: '/targets/' + inputConfig.targetName + '.xml',
-          contents: this.template({ targetName: inputConfig.targetName, targetUrl: inputConfig.targetUrl })
-        }
-      ]
+      if (inputConfig.target) {
+        fileResult.files = [
+          {
+            path: '/targets/' + inputConfig.target.name + '.xml',
+            contents: this.template({ targetName: inputConfig.target.name, targetUrl: inputConfig.target.url })
+          }
+        ]
+      }
 
       resolve(fileResult)
     })

@@ -11,13 +11,40 @@
       "args": [
         "${workspaceRoot}/cli/bin/apigee-template",
         "-f",
-        "/home/tylerayers/Temp/input.json",
+        "${workspaceRoot}/examples/input.json",
         "--deploy",
-        "true",
-        "--environment",
-        "test1"
+        "true"
       ],
-      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "runtimeArgs": [
+        "--nolazy",
+        "-r",
+        "ts-node/register"
+      ],
+      "sourceMaps": true,
+      "cwd": "${workspaceRoot}/cli",
+      "protocol": "inspector",
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "/home/tylerayers/key.json"
+      }
+    },
+    {
+      "name": "Debug CLI inputs",
+      "type": "node",
+      "request": "launch",
+      "args": [
+        "${workspaceRoot}/cli/bin/apigee-template",
+        "-n",
+        "testproxy33",
+        "-b",
+        "/test333",
+        "-q",
+        "test33"
+      ],
+      "runtimeArgs": [
+        "--nolazy",
+        "-r",
+        "ts-node/register"
+      ],
       "sourceMaps": true,
       "cwd": "${workspaceRoot}/cli",
       "protocol": "inspector",
@@ -29,8 +56,14 @@
       "name": "Debug Node TS Service",
       "type": "node",
       "request": "launch",
-      "args": ["${workspaceRoot}/service/src/index.ts"],
-      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "args": [
+        "${workspaceRoot}/service/src/index.ts"
+      ],
+      "runtimeArgs": [
+        "--nolazy",
+        "-r",
+        "ts-node/register"
+      ],
       "sourceMaps": true,
       "cwd": "${workspaceRoot}/service",
       "protocol": "inspector",

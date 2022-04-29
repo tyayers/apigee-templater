@@ -16,10 +16,12 @@
 
 import archiver from 'archiver'
 import fs from 'fs'
+import path from 'path'
 import { performance } from 'perf_hooks'
 import { ApigeeTemplateService, ApigeeTemplateInput, ApigeeTemplateProfile, PlugInResult, PlugInFile, ApigeeConverterPlugin, GenerateResult } from './interfaces'
 import { ProxiesPlugin } from './plugins/proxies.plugin'
 import { TargetsPlugin } from './plugins/targets.plugin'
+import { TargetsBigQueryPlugin } from './plugins/targets.bigquery.plugin'
 import { AuthSfPlugin } from './plugins/auth.sf.plugin'
 import { AuthApiKeyPlugin } from './plugins/auth.apikey.plugin'
 import { QuotaPlugin } from './plugins/traffic.quota.plugin'
@@ -54,6 +56,16 @@ export class ApigeeGenerator implements ApigeeTemplateService {
         new TargetsPlugin(),
         new ProxiesPlugin()
       ]
+    },
+    bigquery: {
+      plugins: [
+        new SpikeArrestPlugin(),
+        new AuthApiKeyPlugin(),
+        new AuthSfPlugin(),
+        new QuotaPlugin(),
+        new TargetsBigQueryPlugin(),
+        new ProxiesPlugin()
+      ]
     }
   };
 
@@ -66,7 +78,7 @@ export class ApigeeGenerator implements ApigeeTemplateService {
    * @param {?Record<string, ApigeeTemplateProfile>} [customProfiles]
    * @param {?ApigeeConverterPlugin[]} [customInputConverters]
    */
-  constructor (customProfiles?: Record<string, ApigeeTemplateProfile>, customInputConverters?: ApigeeConverterPlugin[]) {
+  constructor(customProfiles?: Record<string, ApigeeTemplateProfile>, customInputConverters?: ApigeeConverterPlugin[]) {
     // Override any profiles passed optionally in constructor
     if (customProfiles) {
       for (const [key, value] of Object.entries(customProfiles)) {
@@ -86,7 +98,7 @@ export class ApigeeGenerator implements ApigeeTemplateService {
    * @param {string} inputString
    * @return {Promise<ApigeeTemplateInput>}
    */
-  convertStringToTemplate (inputString: string): Promise<ApigeeTemplateInput> {
+  convertStringToTemplate(inputString: string): Promise<ApigeeTemplateInput> {
     return new Promise((resolve, reject) => {
       const conversions: Promise<ApigeeTemplateInput>[] = []
       for (const plugin of this.converterPlugins) {
@@ -117,7 +129,7 @@ export class ApigeeGenerator implements ApigeeTemplateService {
    * @param {string} outputDir
    * @return {Promise<GenerateResult>} Result including path to generated proxy bundle
    */
-  generateProxyFromString (inputString: string, outputDir: string): Promise<GenerateResult> {
+  generateProxyFromString(inputString: string, outputDir: string): Promise<GenerateResult> {
     return new Promise((resolve, reject) => {
       this.convertStringToTemplate(inputString).then((result) => {
         this.generateProxy(result, outputDir).then((generateResult) => {
@@ -138,7 +150,7 @@ export class ApigeeGenerator implements ApigeeTemplateService {
    * @param {string} outputDir
    * @return {Promise<GenerateResult>} GenerateResult object including path to generated proxy bundle
    */
-  generateProxy (genInput: ApigeeTemplateInput, outputDir: string): Promise<GenerateResult> {
+  generateProxy(genInput: ApigeeTemplateInput, outputDir: string): Promise<GenerateResult> {
     return new Promise((resolve, reject) => {
       const startTime = performance.now()
 
@@ -158,7 +170,7 @@ export class ApigeeGenerator implements ApigeeTemplateService {
       fs.mkdirSync(newOutputDir + '/policies', { recursive: true })
       fs.mkdirSync(newOutputDir + '/resources', { recursive: true })
 
-      for (const endpoint of genInput.proxyEndpoints) {
+      for (const endpoint of genInput.endpoints) {
         // Initialize variables for endpoint
         processingVars.set('preflow_request_policies', [])
         processingVars.set('preflow_response_policies', [])
@@ -169,6 +181,7 @@ export class ApigeeGenerator implements ApigeeTemplateService {
           for (const plugin of this.profiles[genInput.profile].plugins) {
             plugin.applyTemplate(endpoint, processingVars).then((result: PlugInResult) => {
               result.files.forEach((file: PlugInFile) => {
+                fs.mkdirSync(path.dirname(newOutputDir + file.path), { recursive: true })
                 fs.writeFileSync(newOutputDir + file.path, file.contents)
               })
             })

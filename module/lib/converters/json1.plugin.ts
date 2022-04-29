@@ -33,13 +33,13 @@ export class Json1Converter implements ApigeeConverterPlugin {
    * @param {string} input Input string in JSON format
    * @return {Promise<ApigeeTemplateInput>} ApigeeTemplateInput object or undefined if wrong input format
    */
-  convertInput (input: string): Promise<ApigeeTemplateInput> {
+  convertInput(input: string): Promise<ApigeeTemplateInput> {
     return new Promise((resolve, reject) => {
       let result: ApigeeTemplateInput
 
       try {
         const inputData = JSON.parse(input)
-        if (inputData.name && inputData.proxyEndpoints) {
+        if (inputData.name && inputData.endpoints) {
           result = inputData as ApigeeTemplateInput
           resolve(result)
         } else { reject(new Error('Conversion not posible, data incomplete')) }

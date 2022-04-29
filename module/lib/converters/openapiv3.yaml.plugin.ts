@@ -34,7 +34,7 @@ export class OpenApiV3Converter implements ApigeeConverterPlugin {
    * @param {string} input Input string in OpenAPI v3 YAML format
    * @return {Promise<ApigeeTemplateInput>} ApigeeTemplateInput object (or undefined if not possible to convert)
    */
-  convertInput (input: string): Promise<ApigeeTemplateInput> {
+  convertInput(input: string): Promise<ApigeeTemplateInput> {
     return new Promise((resolve, reject) => {
       try {
         const specObj: any = yaml.load(input)
@@ -42,12 +42,14 @@ export class OpenApiV3Converter implements ApigeeConverterPlugin {
         if (specObj && specObj.servers && specObj.servers.length > 0) {
           const result = new ApigeeTemplateInput({
             name: specObj.info.title.replace(' ', '-'),
-            proxyEndpoints: [
+            endpoints: [
               {
                 name: 'default',
                 basePath: Object.keys(specObj.paths)[0].replace('/', ''),
-                targetName: 'default',
-                targetUrl: specObj.servers[0].url.replace('http://', '').replace('https://', '')
+                target: {
+                  name: 'default',
+                  url: specObj.servers[0].url.replace('http://', '').replace('https://', '')
+                }
               }
             ]
           })

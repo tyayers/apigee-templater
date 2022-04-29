@@ -39,12 +39,14 @@ curl --location --request POST 'http://localhost:8080/apigeegen/file' \
 --data-raw '{
   "name": "testproxy",
   "proxyType": "programmable",
-  "proxyEndpoints": [
+  "endpoints": [
     {
       "name": "default",
       "basePath": "/httpbin",
-      "targetName": "default",
-      "targetUrl": "https://httpbin.org",
+      "target": {
+        "name": "default",
+        "url": "https://httpbin.org"
+      },
       "auth": [
         {
           "type": "apikey"
@@ -80,12 +82,14 @@ apigeeTemplater: ApigeeGenerator = new ApigeeGenerator(); // Optionally custom c
 let input: ApigeeTemplateInput = {
   name: "MyProxy",
   type: proxyTypes.programmable,
-  proxyEndpoints: [
+  endpoints: [
     {
       name: "default",
       basePath: "/myproxy",
-      targetName: "default",
-      targetUrl: "https://httpbin.org",
+      target: {
+        name: "default",
+        url: "https://httpbin.org"
+      },
       quotas: [
         {
           count: 200,
@@ -115,10 +119,10 @@ Current features:
 * Auth with apikey or a sharedflow callout (presumably to validate a 3rd party JWT token)
 * Quotas and spike arrests
 
-# Extending & Customizing the Templates
+## Extending & Customizing the Templates
 The project is designed to be extensible.  You can extend or customize in 2 ways.
 
-## 1. Create your own cli or service project
+### 1. Create your own cli or service project
 This option requires you to change the host CLI or service process to inject your own plugins in the ApigeeGenerator constructor.  You can see how the **cli** and **service** projects do this when they create the object.
 
 ```typescript
@@ -138,7 +142,7 @@ This option requires you to change the host CLI or service process to inject you
 ```
 The above plugins are delivered in the **apigee-templater-module** package, but you can easily write your own by implementing the **ApigeeTemplatePlugin** interface (see /module/lib/plugins for examples).
 
-## 2. Add a script callout when using the CLI
+### 2. Add a script callout when using the CLI
 The second option is to add a script using the **-s** parameter when calling the **apigee-template** CLI.  This script is evaluated before the templating is done, and can make changes to the **ApigeeGenerator** object as needed, by for example removing, replacing or adding plugins for both templating and input conversion.
 
 ```bash
@@ -147,5 +151,5 @@ The second option is to add a script using the **-s** parameter when calling the
 apigee-template -f ./samples/input.json -s ./samples/script.js
 ```
 
-# Feedback and feature requests
+## Feedback and feature requests
 In case you find this useful feel free to request features or report bugs as Github issues.

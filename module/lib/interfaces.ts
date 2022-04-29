@@ -14,22 +14,34 @@
  * limitations under the License.
  */
 
+/** A proxy target describes a target URL to route traffic to */
+export class proxyTarget {
+  name = 'default';
+  url?= '';
+  query?= '';
+  table?= '';
+  authScopes?= [];
+}
+
 /** A proxy endpoint describes a basepath, targets and other proxy features */
 export class proxyEndpoint {
-  name = '';
-  basePath = '';
-  targetName?: string;
-  targetUrl = '';
+  name = 'TestProxy';
+  basePath = '/test';
+  target: proxyTarget = {
+    name: 'default',
+    url: 'https://httpbin.org'
+  };
   auth?: authConfig[];
   quotas?: quotaConfig[];
   spikeArrest?: spikeArrestConfig;
+  parameters?: { [key: string]: string } = {};
 }
 
 /** Describes a proxy to be templated */
 export class ApigeeTemplateInput {
   name = 'MyProxy';
   profile = 'default';
-  proxyEndpoints: proxyEndpoint[] = [];
+  endpoints: proxyEndpoint[] = [];
 
   /**
    * Creates an instance of ApigeeTemplateInput.
@@ -39,7 +51,7 @@ export class ApigeeTemplateInput {
    * @public
    * @param {?Partial<ApigeeTemplateInput>} [init]
    */
-  public constructor (init?:Partial<ApigeeTemplateInput>) {
+  public constructor(init?: Partial<ApigeeTemplateInput>) {
     Object.assign(this, init)
   }
 }

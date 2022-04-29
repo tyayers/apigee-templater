@@ -62,7 +62,7 @@ export class ProxiesPlugin implements ApigeeTemplatePlugin {
    * @param {Map<string, object>} processingVars
    * @return {Promise<PlugInResult>}
    */
-  applyTemplate (inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult> {
+  applyTemplate(inputConfig: proxyEndpoint, processingVars: Map<string, object>): Promise<PlugInResult> {
     return new Promise((resolve) => {
       const fileResult: PlugInResult = new PlugInResult()
       fileResult.files = [
@@ -71,7 +71,7 @@ export class ProxiesPlugin implements ApigeeTemplatePlugin {
           contents: this.template(
             {
               basePath: inputConfig.basePath,
-              targetName: inputConfig.targetName,
+              targetName: inputConfig.target.name,
               preflow_request_policies: processingVars.get('preflow_request_policies'),
               preflow_response_policies: processingVars.get('preflow_response_policies'),
               postflow_request_policies: processingVars.get('postflow_request_policies'),
