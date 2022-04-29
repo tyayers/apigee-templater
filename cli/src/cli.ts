@@ -24,6 +24,10 @@ import 'dotenv/config'
 import { ApigeeTemplateInput, ApigeeTemplateService, ApigeeGenerator } from 'apigee-templater-module'
 import { ApigeeService, ApiManagementInterface, ProxyRevision } from 'apigee-x-module'
 
+process.on('uncaughtException', function (err) {
+  console.error(`${chalk.redBright('! Error:')} Problem executing the command, maybe your user or Google Cloud project isn't set?  You can set your default user credentials using ${chalk.blueBright('gcloud auth application-default login')} and default project using  ${chalk.blueBright('gcloud config set project PROJECT')}`)
+});
+
 /**
  * The CLI class parses and collects the user inputs, and generates / depoys the proxy on-demand.
  * @date 1/31/2022 - 8:47:32 AM
@@ -289,24 +293,35 @@ export default class cli {
         console.error(`${chalk.redBright('! Error:')} No environment found to deploy to, please pass the -e parameter with an Apigee X environment.`)
       } else if (options.deploy) {
         const startTime = performance.now()
-        if (result && result.template) {
-          this.apigeeService.updateProxy(result.template.name, _proxyDir + '/' + result.template.name + '.zip').then((updateResult: ProxyRevision) => {
-            if (updateResult && updateResult.revision) {
-              if (result && result.template) {
-                this.apigeeService.deployProxyRevision(options.environment, result.template.name, updateResult.revision, options.deployServiceAccount).then(() => {
-                  const endTime = performance.now()
-                  const duration = endTime - startTime
-                  if (options.verbose) this.logVerbose(JSON.stringify(result), 'deploy result:')
-                  if (result && result.template) { console.log(`${chalk.green('>')} Proxy ${chalk.bold(chalk.blue(result.template.name + ' version ' + updateResult.revision))} deployed to environment ${chalk.bold(chalk.magentaBright(options.environment))} in ${chalk.bold(chalk.green(Math.round(duration) + ' milliseconds'))}.`) }
-                }).catch((error) => {
-                  console.error(`${chalk.redBright('! Error:')} Error deploying proxy revision.`)
-                  if (options.verbose) this.logVerbose(JSON.stringify(error), 'deploy error:')
-                })
+        try {
+          if (result && result.template) {
+            this.apigeeService.updateProxy(result.template.name, _proxyDir + '/' + result.template.name + '.zip').then((updateResult: ProxyRevision) => {
+              console.error("TODO hi2");
+              if (updateResult && updateResult.revision) {
+                if (result && result.template) {
+                  this.apigeeService.deployProxyRevision(options.environment, result.template.name, updateResult.revision, options.deployServiceAccount).then(() => {
+                    const endTime = performance.now()
+                    const duration = endTime - startTime
+                    if (options.verbose) this.logVerbose(JSON.stringify(result), 'deploy result:')
+                    if (result && result.template) { console.log(`${chalk.green('>')} Proxy ${chalk.bold(chalk.blue(result.template.name + ' version ' + updateResult.revision))} deployed to environment ${chalk.bold(chalk.magentaBright(options.environment))} in ${chalk.bold(chalk.green(Math.round(duration) + ' milliseconds'))}.`) }
+                  }).catch((error) => {
+                    console.error(`${chalk.redBright('! Error:')} Error deploying proxy revision.`)
+                    if (options.verbose) this.logVerbose(JSON.stringify(error), 'deploy error:')
+                  })
+                }
               }
-            }
-          }).catch((error) => {
-            if (error && error.response && error.response.status && error.response.status === 400) { console.error(`${chalk.redBright('! Error:')} Error in proxy bundle definition, try importing manually for more detailed error information.`) } else { console.error(`${chalk.redBright('! Error:')} Error deploying proxy revision.`) }
-          })
+            }).catch((error) => {
+              if (error && error.response && error.response.status && error.response.status === 400) {
+                console.error(`${chalk.redBright('! Error:')} Error in proxy bundle definition, try importing manually for more detailed error information.`)
+              }
+              else {
+                console.error(`${chalk.redBright('! Error:')} Error updating proxy.`)
+              }
+            });
+          }
+        }
+        catch (error) {
+          console.error("ERROR")
         }
       }
     }).catch(() => {

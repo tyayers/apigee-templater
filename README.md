@@ -1,15 +1,67 @@
 # Apigee Templater
 A tool for automating the templating of Apigee API proxies through either a **CLI**, **REST API**, or **Typescript/Javascript** module. The generated proxy can either be downloaded as a bundle, or deployed to an Apigee X environment.  
 
-## Examples
+## Prerequisites
+This tool assumes you already have an Apigee X org and environment provisioned (either production or eval).  Just visit [here](https://cloud.google.com/apigee/docs/api-platform/get-started/provisioning-intro) for more info.  Also you should have **gcloud** installed and the project set to where Apigee X is provisioned.
+
+## TLDR;
+
+### Proxy a web endpoint
+
+Just run this command to deploy a sample test proxy to your Apigee X **eval** environment (or change to any environment) in your current project.
+
+```bash
+npx apigee-templater-cli -n HttpBinProxy -b /httpbin -t https://httpbin.org -d -e eval
+```
+After waiting a few minutes for the deployment to complete, you can then do a test call to your Apigee X environment group endpoint at the **/httpbin** root path to proxy httpbin.org.
+
+### Proxy a BigQuery data table
+
+Run this command to build and deploy a proxy to the Austin Bike Sharing Trips public dataset and access that data (including filters, paging and sorting) through a REST API.
+
+```bash
+npx apigee-templater-cli -n BikeTrips-v1 -b /trips -q bigquery-public-data.austin_bikeshare.bikeshare_trips -d -e eval -s serviceaccount@project@project.iam.gserviceaccount.com
+```
+
+Check out the Apigee console to see how these deployments look, and try calling the /httpbin and /trips endpoints for data.
+
+## Features
+
+The module & CLI can generate and deploy Apigee X proxies with these features out-of-the-box, and can be extended with new features easily (see "Extending & Customizing" section below).
+
+* Proxy name
+* Base path
+* Targets
+  * HTTPS Urls
+  * BigQuery Queries
+  * BigQuery Tables
+* Auth with apikey or 3rd party OAuth token
+* Quotas
+* Spike Arrests
+
+The templating engine uses the [Handlebars](https://handlebarsjs.com/) framework to build any type of proxy based on structured inputs.  And because the logic is contained in Javascript or Typescript plugins, logic can be added for any type of requirement.
+
+## Getting Started
+
+You can try out the tool easily in Google Cloud Shell including a tutorial walk-through of the features by clicking here:
+
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/tyayers/apigee-templater&cloudshell_git_branch=main&cloudshell_workspace=.&cloudshell_tutorial=docs/cloudshell-tutorial.md)
+
 ### CLI
 Install the CLI like this.
 ```bash
-npm install -g apigee-template
+npm install -g apigee-templater-cli
 ```
+Or use the CLI without installing.
+```bash
+npx apigee-templater-cli
+```
+
+Before calling the CLI, make sure you have a user and project set in your environment.  These are used to authenticate to the Apigee X API for deployments (if you are not deploying, then you don't need this).  The default application user can be set with **gcloud auth application-default login** and the default project set with **gcloud config set project PROJECT**.
+
 Use the CLI either in command or interactive mode.
 ```bash
-#Use the CLI in interactive to supply inputs
+#Use the CLI in interactive mode to collect inputs
 apigee-template
 > Welcome to apigee-template, use -h for more command line options. 
 ? What should the proxy be called? MyProxy
@@ -24,7 +76,11 @@ apigee-template -h
 ```
 ```bash
 #Generate a proxy based on input.json and deploy it to environment test1 with credentials in key.json
-apigee-template -f ./samples/input.json -d -e test1 -k ./key.json
+apigee-template -f ./samples/input.json -d -e test1
+```
+```bash
+#Generate a proxy that creates an API to a BigQuery table, including the raw data-to-REST mapping logic, and deploy it to the Apigee X environment eval with the service account (for authenticating to BigQuery)
+apigee-template -n BikeTrips-v1 -b /trips -q bigquery-public-data.austin_bikeshare.bikeshare_trips -d -e eval -s serviceaccount@project@project.iam.gserviceaccount.com
 ```
 ### REST API
 You can run the REST API service locally or deploy to any container runtime environment like [Cloud Run](https://cloud.google.com/run) (default deployment requires unauthenticated access).  
@@ -111,13 +167,6 @@ apigeeGenerator.generateProxy(input, "./proxies").then((result) => {
 });
 
 ```
-
-Current features:
-* Proxy name
-* Base path
-* Target URL
-* Auth with apikey or a sharedflow callout (presumably to validate a 3rd party JWT token)
-* Quotas and spike arrests
 
 ## Extending & Customizing the Templates
 The project is designed to be extensible.  You can extend or customize in 2 ways.
