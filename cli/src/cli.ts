@@ -22,7 +22,7 @@ import chalk from 'chalk'
 import 'dotenv/config'
 
 import { ApigeeTemplateInput, ApigeeTemplateService, ApigeeGenerator } from 'apigee-templater-module'
-import { ApigeeService, ApiManagementInterface, ProxyRevision } from 'apigee-x-module'
+import { ApigeeService, ApiManagementInterface, EnvironmentGroup, EnvironmentGroupAttachment, ProxyRevision } from 'apigee-x-module'
 
 process.on('uncaughtException', function (err) {
   console.error(`${chalk.redBright('! Error:')} Problem executing the command, maybe your user or Google Cloud project isn't set?  You can set your default user credentials using ${chalk.blueBright('gcloud auth application-default login')} and default project using  ${chalk.blueBright('gcloud config set project PROJECT')}`)
@@ -302,7 +302,26 @@ export default class cli {
                     const endTime = performance.now()
                     const duration = endTime - startTime
                     if (options.verbose) this.logVerbose(JSON.stringify(result), 'deploy result:')
-                    if (result && result.template) { console.log(`${chalk.green('>')} Proxy ${chalk.bold(chalk.blue(result.template.name + ' version ' + updateResult.revision))} deployed to environment ${chalk.bold(chalk.magentaBright(options.environment))} in ${chalk.bold(chalk.green(Math.round(duration) + ' milliseconds'))}.`) }
+                    if (result && result.template) {
+                      console.log(`${chalk.green('>')} Proxy ${chalk.bold(chalk.blue(result.template.name + ' version ' + updateResult.revision))} deployed to environment ${chalk.bold(chalk.magentaBright(options.environment))} in ${chalk.bold(chalk.green(Math.round(duration) + ' milliseconds'))}.`)
+
+                      // Now try to get the env group URL
+                      this.apigeeService.getEnvironmentGroups().then((result: EnvironmentGroup[]) => {
+                        result.forEach((group: EnvironmentGroup) => {
+                          this.apigeeService.getEnvironmentGroupAttachments(group.name).then((result => {
+                            result.forEach((element: EnvironmentGroupAttachment) => {
+                              if (element.environment === options.environment) {
+                                // Here we have an attachment, to print host URL link
+                                group.hostnames.forEach((hostname: string) => {
+                                  console.log(`${chalk.green('>')} Wait 2-3 minutes, then test here: ${chalk.bold(chalk.blue(`https://${hostname}${options.basePath}`))}`);
+                                });
+                              }
+                            });
+                          }))
+                        });
+                      });
+                    }
+
                   }).catch((error) => {
                     console.error(`${chalk.redBright('! Error:')} Error deploying proxy revision.`)
                     if (options.verbose) this.logVerbose(JSON.stringify(error), 'deploy error:')
@@ -320,7 +339,7 @@ export default class cli {
           }
         }
         catch (error) {
-          console.error("ERROR")
+          console.error(`${chalk.redBright('! Error:')} Error generating proxy.`)
         }
       }
     }).catch(() => {
@@ -337,8 +356,8 @@ export default class cli {
    * @param {string} label An optional label as prefix label
    */
   logVerbose(input: string, label: string) {
-    if (label) console.log(`${chalk.grey('> ' + label)}`)
-    console.log(`${chalk.grey('> ' + input)}`)
+    if (label) console.log(`${chalk.grey('> ' + label)} `)
+    console.log(`${chalk.grey('> ' + input)} `)
   }
 }
 
