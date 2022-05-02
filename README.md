@@ -1,33 +1,74 @@
 # Apigee Templater
-A tool for automating the templating of Apigee API proxies through either a **CLI**, **REST API**, or **Typescript/Javascript** module. The generated proxy can either be downloaded as a bundle, or deployed to an Apigee X environment.  
-
-## Prerequisites
-This tool assumes you already have an Apigee X org and environment provisioned (either production or eval).  Just visit [here](https://cloud.google.com/apigee/docs/api-platform/get-started/provisioning-intro) for more info.  Also you should have **gcloud** installed and the project set to where Apigee X is provisioned.
-
-## TLDR;
+A tool for automating the templating of Apigee API proxies through either a **CLI**, **REST API**, or **Typescript/Javascript** module. The generated proxy can either be downloaded as a bundle, or deployed directly to an Apigee X environment.  
 
 You can try out the tool easily in Google Cloud Shell including a tutorial walk-through of the features by clicking here:
 
 [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/tyayers/apigee-templater&cloudshell_git_branch=main&cloudshell_workspace=.&cloudshell_tutorial=docs/cloudshell-tutorial.md)
 
+## Prerequisites
+This tool assumes you already have an Apigee X org and environment provisioned (either production or eval, see [here](https://cloud.google.com/apigee/docs/api-platform/get-started/provisioning-intro) for more info).  Also you should have **gcloud** installed and the project set to where Apigee X is provisioned.
+
+## TLDR;
+
 ### Proxy a web endpoint
 
 Just run this command to deploy a sample test proxy to your Apigee X **eval** environment (or change to any environment) in your current project.
 
-```bash
+```sh
+# Install CLI globally and use a simple template to create a proxy
+npm install -g apigee-templater-cli
+apigee-template -n HttpBinProxy -b /httpbin -t https://httpbin.org -d -e eval
+# OR just run using npx
 npx apigee-templater-cli -n HttpBinProxy -b /httpbin -t https://httpbin.org -d -e eval
 ```
-After waiting a few minutes for the deployment to complete, you can then do a test call to your Apigee X environment group endpoint at the **/httpbin** root path to proxy httpbin.org.
+Output:
+```sh
+# Proxy bundle was generated and deployed to environment "eval"
+> Proxy HttpBinProxy generated to ./HttpBinProxy.zip in 32 milliseconds.
+> Proxy HttpBinProxy version 1 deployed to environment eval in 2258 milliseconds.
+> Wait 2-3 minutes, then test here: https://eval-group.34-111-104-118.nip.io/httpbin
+```
 
 ### Proxy a BigQuery data table
 
-Run this command to build and deploy a proxy to the Austin Bike Sharing Trips public dataset and access that data (including filters, paging and sorting) through a REST API.
+Run this command to build and deploy a proxy to the **Austin Bike Sharing Trips public dataset** and access that data (including filters, paging and sorting) through a REST API.
 
-```bash
-npx apigee-templater-cli -n BikeTrips-v1 -b /trips -q bigquery-public-data.austin_bikeshare.bikeshare_trips -d -e eval -s serviceaccount@project@project.iam.gserviceaccount.com
+```sh
+# Build proxy to BigQuery table using globally installed CLI
+apigee-template -n BikeTrips-v1 -b /trips -q bigquery-public-data.austin_bikeshare.bikeshare_trips -d -e eval -s serviceaccount@project.iam.gserviceaccount.com
+# OR run with npx without installing CLI
+npx apigee-templater-cli -n BikeTrips-v1 -b /trips -q bigquery-public-data.austin_bikeshare.bikeshare_trips -d -e eval -s serviceaccount@project.iam.gserviceaccount.com
 ```
 
-Check out the Apigee console to see how these deployments look, and try calling the /httpbin and /trips endpoints for data.
+Output:
+```sh
+# Proxy bundle was generated and deployed to environment "eval" with service identity
+> Proxy BikeTrips-v1 generated to ./BikeTrips-v1.zip in 42 milliseconds.
+> Proxy BikeTrips-v1 version 1 deployed to environment eval in 3267 milliseconds.
+> Wait 2-3 minutes, then test here: https://eval-group.34-111-104-118.nip.io/trips
+```
+After waiting a few minutes, you can run **curl https://eval-group.34-111-104-118.nip.io/trips?pageSize=1** and get bike trip data returned, with URL parameters **pageSize**, **filter**, **orderBy** and **pageToken**.
+
+```sh
+{
+  "trips": [
+    {
+      "trip_id": "9900289692",
+      "subscriber_type": "Walk Up",
+      "bikeid": "248",
+      "start_time": "1.443820321E9",
+      "start_station_id": "1006",
+      "start_station_name": "Zilker Park West",
+      "end_station_id": "1008",
+      "end_station_name": "Nueces @ 3rd",
+      "duration_minutes": "39"
+    }
+  ],
+  "next_page_token": 2
+}
+```
+
+Check out the deployed proxies in the [Apigee console](https://apigee.google.com), where you can check the status of the deployments, do tracing, and create API products based on these automated proxies.
 
 ## Features
 

@@ -24,7 +24,7 @@ import 'dotenv/config'
 import { ApigeeTemplateInput, ApigeeTemplateService, ApigeeGenerator } from 'apigee-templater-module'
 import { ApigeeService, ApiManagementInterface, EnvironmentGroup, EnvironmentGroupAttachment, ProxyRevision } from 'apigee-x-module'
 
-process.on('uncaughtException', function (err) {
+process.on('uncaughtException', function () {
   console.error(`${chalk.redBright('! Error:')} Problem executing the command, maybe your user or Google Cloud project isn't set?  You can set your default user credentials using ${chalk.blueBright('gcloud auth application-default login')} and default project using  ${chalk.blueBright('gcloud config set project PROJECT')}`)
 });
 
@@ -68,6 +68,7 @@ export default class cli {
         '--deploy': Boolean,
         '--deployServiceAccount': String,
         '--environment': String,
+        '--project': String,
         '--filter': String,
         '--name': String,
         '--basePath': String,
@@ -81,6 +82,7 @@ export default class cli {
         '-d': '--deploy',
         '-s': '--deployServiceAccount',
         '-e': '--environment',
+        '-p': '--project',
         '-l': '--filter',
         '-n': '--name',
         '-b': '--basePath',
@@ -100,6 +102,7 @@ export default class cli {
       deploy: args['--deploy'] || false,
       deployServiceAccount: args['--deployServiceAccount'] || '',
       environment: args['--environment'] || '',
+      project: args['--project'] || '',
       filter: args['--filter'] || '',
       name: args['--name'] || '',
       basePath: args['--basePath'] || '',
@@ -278,6 +281,19 @@ export default class cli {
 
     const _proxyDir = '.'
 
+    if (options.project) {
+      this.apigeeService.org = options.project;
+      process.env.PROJECT = options.project;
+    }
+    else if (process.env.PROJECT) {
+      this.apigeeService.org = process.env.PROJECT;
+    }
+    else {
+      process.env.PROJECT = (await this.apigeeService.getOrg()).toString();
+    }
+
+    if (options.verbose) this.logVerbose(`Set Project to ${process.env.PROJECT}`, 'env:')
+
     if (options.filter) {
       // users can add their own preprocessing filter scripts here
       // eslint-disable-next-line
@@ -355,9 +371,11 @@ export default class cli {
    * @param {string} input The text message to log
    * @param {string} label An optional label as prefix label
    */
-  logVerbose(input: string, label: string) {
-    if (label) console.log(`${chalk.grey('> ' + label)} `)
-    console.log(`${chalk.grey('> ' + input)} `)
+  logVerbose(input: string, label?: string) {
+    if (label)
+      console.log(`${chalk.grey('> ' + label + ' ' + input)}`);
+    else
+      console.log(`${chalk.grey('> ' + input)} `)
   }
 }
 
@@ -374,6 +392,7 @@ class cliArgs {
   deploy = false;
   deployServiceAccount = '';
   environment = '';
+  project = '';
   filter = '';
   name = '';
   basePath = '';
@@ -410,6 +429,10 @@ const helpCommands = [
   {
     name: '--environment, -e',
     description: 'If --deploy is true, the environment to deploy the proxy to.'
+  },
+  {
+    name: '--project, -p',
+    description: 'The Google Cloud project / Apigee Org to use for the deployment.'
   },
   {
     name: '--filter, -l',

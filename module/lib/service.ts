@@ -177,6 +177,11 @@ export class ApigeeGenerator implements ApigeeTemplateService {
         processingVars.set('postflow_request_policies', [])
         processingVars.set('postflow_response_policies', [])
 
+        if (process.env.PROJECT) {
+          if (!endpoint.parameters) endpoint.parameters = {};
+          endpoint.parameters.PROJECT = process.env.PROJECT;
+        }
+
         if (Object.keys(this.profiles).includes(genInput.profile)) {
           for (const plugin of this.profiles[genInput.profile].plugins) {
             plugin.applyTemplate(endpoint, processingVars).then((result: PlugInResult) => {

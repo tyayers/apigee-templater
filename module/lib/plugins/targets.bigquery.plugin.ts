@@ -162,11 +162,6 @@ function ConvertBigQueryResponse(inputObject) {
   applyTemplate(inputConfig: proxyEndpoint): Promise<PlugInResult> {
     return new Promise((resolve) => {
       const fileResult: PlugInResult = new PlugInResult()
-      // let process: {
-      //   env: {
-      //     PROJECT: string
-      //   }
-      // }
 
       let project = process.env.PROJECT;
 
